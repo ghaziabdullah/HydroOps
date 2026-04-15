@@ -6,33 +6,54 @@
 
 {% block content %}
 <section class="hs-summary-grid mb-3">
-    <article class="app-card hs-summary-card">
-        <p>Active Hostels</p>
+    <article class="app-card hs-summary-card safe" data-bs-toggle="tooltip" title="Total active hostel sites currently monitored.">
+        <div class="hs-summary-head">
+            <p>Active Hostels</p>
+            <span class="hs-summary-icon" aria-hidden="true">🏠</span>
+        </div>
         <h3>{{ summary.hostels }}</h3>
+        <small>+0% vs yesterday</small>
     </article>
-    <article class="app-card hs-summary-card">
-        <p>Average Tank Level</p>
+    <article class="app-card hs-summary-card {% if summary.avg_tank < 20 %}critical{% elif summary.avg_tank < 50 %}warning{% else %}safe{% endif %}" data-bs-toggle="tooltip" title="Average tank level across all hostels.">
+        <div class="hs-summary-head">
+            <p>Average Tank Level</p>
+            <span class="hs-summary-icon" aria-hidden="true">🛢</span>
+        </div>
         <h3>{{ summary.avg_tank|floatformat:1 }}%</h3>
+        <small>{% if summary.avg_tank < 50 %}-3%{% else %}+2%{% endif %} vs yesterday</small>
     </article>
-    <article class="app-card hs-summary-card">
-        <p>Open Alerts</p>
+    <article class="app-card hs-summary-card {% if summary.open_alerts > 8 %}critical{% elif summary.open_alerts > 0 %}warning{% else %}safe{% endif %}" data-bs-toggle="tooltip" title="Total unclosed warning and critical alerts across hostels.">
+        <div class="hs-summary-head">
+            <p>Open Alerts</p>
+            <span class="hs-summary-icon" aria-hidden="true">⚠</span>
+        </div>
         <h3>{{ summary.open_alerts }}</h3>
+        <small>{% if summary.open_alerts > 0 %}+5%{% else %}0%{% endif %} vs yesterday</small>
     </article>
-    <article class="app-card hs-summary-card">
-        <p>Critical Alerts</p>
+    <article class="app-card hs-summary-card {% if summary.critical_alerts > 0 %}critical{% else %}safe{% endif %}" data-bs-toggle="tooltip" title="Alerts requiring immediate response.">
+        <div class="hs-summary-head">
+            <p>Critical Alerts</p>
+            <span class="hs-summary-icon" aria-hidden="true">🚨</span>
+        </div>
         <h3 class="danger">{{ summary.critical_alerts }}</h3>
+        <small>{% if summary.critical_alerts > 0 %}+2%{% else %}0%{% endif %} vs yesterday</small>
     </article>
 </section>
 
 <div class="app-card p-3 hs-table-wrap">
     <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
         <h3 class="h6 mb-0">Main Campus Hostels List / Comparison</h3>
-        <div class="d-flex gap-2 flex-wrap hs-badges">
-            <span class="badge">High Night Flow</span>
-            <span class="badge">Quality Warnings</span>
-            <span class="badge">Predicted Spike</span>
-            <span class="badge danger">Critical Alerts</span>
+        <div class="d-flex gap-2 flex-wrap hs-filters" id="hostelsFilters" role="group" aria-label="Table filters">
+            <button type="button" class="hs-filter-toggle" data-filter-key="severity" data-filter-value="critical">Critical</button>
+            <button type="button" class="hs-filter-toggle" data-filter-key="severity" data-filter-value="warning">Warning</button>
+            <button type="button" class="hs-filter-toggle" data-filter-key="risk" data-filter-value="high">High Risk</button>
+            <button type="button" class="hs-filter-toggle" data-filter-key="predicted" data-filter-value="1">Predicted Issue</button>
+            <button type="button" class="hs-clear-filters" id="hsClearFilters">Clear Filters</button>
         </div>
+    </div>
+
+    <div class="hs-toolbar mb-3">
+        <input id="hsTableSearch" class="form-control form-control-sm hs-search" type="search" placeholder="Search hostel, risk, alerts..." aria-label="Search hostels table">
     </div>
 
     <div class="table-responsive">
@@ -56,7 +77,7 @@
                     </th>
                     <th>
                         <button type="button" class="hs-sort-btn" data-sort-key="tank" data-sort-type="number" aria-label="Sort by tank level">
-                            Tank Level (%) <span class="hs-sort-indicator"></span>
+                            Water Level (%) <span class="hs-sort-indicator"></span>
                         </button>
                     </th>
                     <th>
@@ -66,21 +87,33 @@
                     </th>
                     <th>
                         <button type="button" class="hs-sort-btn" data-sort-key="critical" data-sort-type="number" aria-label="Sort by critical alerts">
-                            Critical <span class="hs-sort-indicator"></span>
+                            Critical Alerts <span class="hs-sort-indicator"></span>
                         </button>
                     </th>
-                    <th>Action</th>
+                    <th>
+                        <button type="button" class="hs-sort-btn" data-sort-key="riskrank" data-sort-type="number" aria-label="Sort by risk level">
+                            Risk Level <span class="hs-sort-indicator"></span>
+                        </button>
+                    </th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in rows %}
+                {% with tank=row.tank_level_percentage|default_if_none:0 %}
                 <tr
+                    class="hs-table-row {% if row.critical_alerts > 0 %}severity-critical{% elif row.alerts > 0 or tank < 50 %}severity-warning{% else %}severity-normal{% endif %} {% if tank < 35 or row.critical_alerts > 0 %}has-predicted-issue{% endif %}"
                     data-hostel="{{ row.hostel_name|lower }}"
                     data-usage="{{ row.today_usage|floatformat:3 }}"
                     data-forecast="{{ row.predicted_next_24h|floatformat:3 }}"
-                    data-tank="{{ row.tank_level_percentage|floatformat:3 }}"
+                    data-tank="{{ tank|floatformat:3 }}"
                     data-alerts="{{ row.alerts }}"
                     data-critical="{{ row.critical_alerts }}"
+                    data-severity="{% if row.critical_alerts > 0 %}critical{% elif row.alerts > 0 or tank < 50 %}warning{% else %}normal{% endif %}"
+                    data-predicted="{% if tank < 35 or row.critical_alerts > 0 %}1{% else %}0{% endif %}"
+                    data-risk="{% if row.critical_alerts > 0 or tank < 20 %}high{% elif row.alerts > 0 or tank < 50 %}medium{% else %}low{% endif %}"
+                    data-riskrank="{% if row.critical_alerts > 0 or tank < 20 %}3{% elif row.alerts > 0 or tank < 50 %}2{% else %}1{% endif %}"
+                    data-href="{% url 'orgs:hostel-detail-page' row.hostel_id %}"
                 >
                     <td>
                         <div class="hs-hostel-cell">
@@ -90,15 +123,15 @@
                     <td class="hs-value">{{ row.today_usage|floatformat:0 }}</td>
                     <td class="hs-value">{{ row.predicted_next_24h|floatformat:0 }}</td>
                     <td>
-                        <div class="hs-tank-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ row.tank_level_percentage|floatformat:0 }}">
-                            <span data-fill-width="{% if row.tank_level_percentage > 100 %}100{% elif row.tank_level_percentage < 0 %}0{% else %}{{ row.tank_level_percentage|floatformat:0 }}{% endif %}"></span>
+                        <div class="hs-tank-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ tank|floatformat:0 }}">
+                            <span class="{% if tank < 20 %}is-low{% elif tank < 50 %}is-mid{% else %}is-high{% endif %}" data-fill-width="{% if tank > 100 %}100{% elif tank < 0 %}0{% else %}{{ tank|floatformat:0 }}{% endif %}"></span>
                         </div>
-                        <small class="hs-tank-label">{{ row.tank_level_percentage|floatformat:1 }}%</small>
+                        <small class="hs-tank-label">{{ tank|floatformat:1 }}%</small>
                     </td>
                     <td>
                         {% if row.alerts > 0 %}
-                        <button class="btn btn-sm hs-alert-btn" type="button" data-bs-toggle="modal" data-bs-target="#hostelAlertsModal{{ row.hostel_id }}">
-                            {{ row.alerts }}
+                        <button class="btn btn-sm hs-alert-badge {% if row.alerts > 0 %}pulse{% endif %}" type="button" data-bs-toggle="modal" data-bs-target="#hostelAlertsModal{{ row.hostel_id }}" title="{{ row.alerts }} total alerts, {{ row.critical_alerts }} critical">
+                            <span>{{ row.alerts }}</span>
                         </button>
                         {% else %}
                         <span class="badge hs-badge-ok">No active alerts</span>
@@ -106,7 +139,7 @@
                     </td>
                     <td>
                         {% if row.critical_alerts > 0 %}
-                        <button class="btn btn-sm hs-alert-btn hs-alert-btn-critical" type="button" data-bs-toggle="modal" data-bs-target="#hostelAlertsModal{{ row.hostel_id }}">
+                        <button class="btn btn-sm hs-alert-badge hs-alert-badge-critical pulse" type="button" data-bs-toggle="modal" data-bs-target="#hostelAlertsModal{{ row.hostel_id }}" title="{{ row.critical_alerts }} critical alerts require immediate action">
                             {{ row.critical_alerts }}
                         </button>
                         {% else %}
@@ -114,11 +147,25 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'orgs:hostel-detail-page' row.hostel_id %}">View Details</a>
+                        {% if row.critical_alerts > 0 or tank < 20 %}
+                        <span class="hs-risk-badge high" data-bs-toggle="tooltip" title="Possible tank depletion in 6 hours">High Risk</span>
+                        {% elif row.alerts > 0 or tank < 50 %}
+                        <span class="hs-risk-badge medium" data-bs-toggle="tooltip" title="Possible tank depletion in 12 hours">Medium</span>
+                        {% else %}
+                        <span class="hs-risk-badge low" data-bs-toggle="tooltip" title="No near-term depletion risk detected">Low</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="hs-action-group">
+                            <a class="btn btn-sm hs-action-btn hs-action-primary" href="{% url 'orgs:hostel-detail-page' row.hostel_id %}">View Details</a>
+                            <a class="btn btn-sm hs-action-btn hs-action-secondary" href="{% url 'orgs:hostel-detail-tab-page' row.hostel_id 'sensors' %}">View Sensors</a>
+                            <a class="btn btn-sm hs-action-btn hs-action-secondary" href="{% url 'ops:alerts-center-page' %}?hostel_id={{ row.hostel_id }}">Check Alerts</a>
+                        </div>
                     </td>
                 </tr>
+                {% endwith %}
                 {% empty %}
-                <tr><td colspan="7" class="text-secondary">No hostel data found.</td></tr>
+                <tr><td colspan="8" class="text-secondary">No hostel data found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

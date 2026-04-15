@@ -53,7 +53,7 @@ def get_campus_overview_metrics() -> dict:
 def get_hostel_comparison_rows() -> list[dict]:
     now = timezone.now()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    tank_since = now - timedelta(hours=6)
+    tank_since = now - timedelta(hours=12)
     rows: list[dict] = []
 
     for hostel in Hostel.objects.filter(is_active=True).order_by("name"):
@@ -79,14 +79,25 @@ def get_hostel_comparison_rows() -> list[dict]:
             for alert in active_alerts[:8]
         ]
 
-        tank_level = (
-            Reading.objects.filter(
-                sensor__kind=Sensor.SensorKind.LEVEL,
-                sensor__device__asset__hostel=hostel,
-                timestamp__gte=tank_since,
-            ).aggregate(v=Avg("value"))["v"]
-            or 0
+        tank_queryset = Reading.objects.filter(
+            sensor__kind=Sensor.SensorKind.LEVEL,
+            sensor__is_active=True,
+            sensor__device__is_active=True,
+            sensor__device__asset__is_active=True,
+            sensor__device__asset__hostel=hostel,
         )
+
+        tank_level = (
+            tank_queryset.filter(timestamp__gte=tank_since)
+            .order_by("-timestamp")
+            .values_list("value", flat=True)
+            .first()
+        )
+        if tank_level is None:
+            tank_level = (
+                tank_queryset.order_by("-timestamp").values_list("value", flat=True).first()
+                or 0
+            )
 
         latest_hostel_forecast = (
             ForecastRun.objects.filter(scope_type=ForecastRun.ScopeType.HOSTEL, hostel=hostel)
