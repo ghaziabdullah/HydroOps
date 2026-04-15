@@ -1,0 +1,219 @@
+
+## HYDROOPS — Full Project Context / Specification (Paste into AI)
+
+### 1) Project Name
+**HydroOps** (working name)
+
+### 2) Problem Statement
+Build a web-based smart water monitoring and optimization system for a **single university campus** with multiple hostels/buildings. The system will ingest sensor readings (later from IoT devices; currently simulated) and provide dashboards, alerts, water quality monitoring, and forecasting. The long-term goal is to reduce wastage, detect leaks/blockages, manage tank refilling, track quality compliance, and provide actionable insights at **campus, hostel, and unit** levels.
+
+### 3) Current Development Phase
+- Hardware sensors are **not integrated yet** (will be later).
+- AI models are **not integrated yet** (will be later).
+- Right now we are building:
+  1) Scalable Django backend structure + database schema  
+  2) Dashboard UI using Django templates + Bootstrap  
+  3) Demo data seeding (simulated time-series readings)  
+  4) Rule-based alerts (v1)  
+  5) Baseline forecasting (non-ML) to support “prediction UI” now  
+- The UI must already include **AI-ready features** (forecast pages, recommendations panels, model status cards), but we will label them clearly as baseline/demo until AI models are added.
+
+### 4) Target Scope / Levels
+We must support drill-down and aggregation at these levels:
+
+**Campus (single campus only)**
+- Campus-wide overview, comparisons across hostels, campus leak indicator (inlet vs sum outflows).
+
+**Hostel/Building Level**
+- Monitor water usage, tank levels, pressure, quality, alerts for a hostel.
+
+**Unit Level (IMPORTANT)**
+“Unit” means BOTH:
+- Floors (e.g., Floor 1, Floor 2, Floor 3)
+- Washroom clusters / zones (e.g., Cluster A, Cluster B)
+Each unit has its own usage patterns and should show its own **forecast** (future prediction of water use).
+
+### 5) What We Want to Achieve (Functional Requirements)
+
+#### A) Quantity / Usage Monitoring
+- Monitor flow usage trends (time-series).
+- Compare usage at hostel and unit level.
+- Detect wastage patterns (e.g., high usage in certain units).
+- Detect tap left open at midnight / continuous usage at night:
+  - If flow continues above a small threshold continuously for long duration (rule-based leak suspected).
+- Detect leaking flush tank / small continuous flow.
+- Campus-level leak detection:
+  - Compare **campus inlet flow** vs **sum of hostels/outlets** (difference indicates possible leak or metering issue).
+
+#### B) Tank Monitoring (Level Sensors)
+- Monitor tank level trend.
+- Show refill-needed states (low level threshold).
+- Later: “automatic refill” can be integrated, but current scope is monitoring + alerts.
+
+#### C) Pressure Monitoring (Pipe Health)
+- Monitor pressure trends.
+- Detect possible blockage:
+  - Increased pressure + decreased flow (rule-based).
+- Detect possible leak:
+  - Pressure drops or abnormal patterns (later; for now basic rule/placeholder).
+
+#### D) Water Quality Monitoring (Real-time sensors, not sampled)
+- pH sensor (in-line)
+- Turbidity sensor (optical)
+- TDS / conductivity
+- Temperature
+UI must show compliance status and trends, plus alerts when thresholds are exceeded.
+
+#### E) Forecasting / Prediction (AI-ready)
+- “Future prediction of water use” must exist in UI for:
+  - Each Unit
+  - Each Hostel
+  - (Optional) Campus
+- For now implement **baseline forecasting** (non-ML), e.g.:
+  - hourly averages based on last 7 days
+  - “same-hour previous-day” pattern
+- Later replace/extend with ARIMA/LSTM etc.
+
+#### F) Alerts Center (Operator Workflow)
+- Central alert list with filters:
+  - severity: INFO/WARN/CRITICAL
+  - type: leak suspected, blockage suspected, tank low, overflow risk, quality exceedance, sensor offline, abnormal usage
+  - filter by hostel, unit
+- Each alert has:
+  - message, start time, optional end time
+  - scope (hostel/unit/asset/sensor)
+  - acknowledge action (sets acknowledged timestamp and user)
+- Alert detail UI shows mini-chart around the alert time window (later).
+
+#### G) Reports & Insights (MVP)
+- Simple reports/exports (CSV):
+  - unit readings export
+  - alerts export
+  - summary usage report (later)
+- Insights:
+  - Top consuming hostels/units
+  - Highest night-flow units
+  - Repeat alerts in same unit
+
+### 6) Non-Functional Requirements (Quality / Best Practices)
+- Code must be clean, scalable, and not messy.
+- Use best Django practices:
+  - thin views
+  - business logic in services
+  - query logic in selectors
+- Avoid hard-coded values: use configurable `ThresholdRule`.
+- Must be database-agnostic (start with SQLite; later can move to PostgreSQL).
+- Add sensible indexes for time-series queries.
+- Use Django admin for quick management.
+- Security basics:
+  - login required for pages
+  - CSRF-protected POST actions
+
+### 7) Tech Stack Constraints
+- Backend: Django
+- Frontend: Django templates + Bootstrap 5 + Chart.js (no separate React frontend)
+- JS allowed for dynamic elements and charts and theme toggle.
+- Use JS for making the page interactive and appealing
+- Theme:
+  - dark mode default
+  - switch to light mode via toggle
+- Responsive design: Should work consistently on desktop and mobile.
+
+### 8) Current Repository Structure
+Top-level tree:
+
+HYDROOPS/
+- core/           (Django project package: settings, urls, wsgi/asgi)
+- accounts/       (auth / roles)
+- dashboard/      (UI views + templates + static)
+- iot/            (devices + sensors + readings + ingestion later)
+- ops/            (alerts + forecasting + reports + seed demo)
+- orgs/           (hostels + units)
+- manage.py
+- Project_summary.txt (this document or similar)
+- UI_SPEC.tx  (Use this file for frontend)
+
+### 9) App Responsibilities (Boundaries)
+- **orgs**: Hostel, Unit (floor/cluster), org hierarchy
+- **iot**: Asset, Device, Sensor, Reading (time-series), ingestion later
+- **ops**: ThresholdRule, Alert, ForecastRun/ForecastPoint, alert generation services, baseline forecasting services, management commands (seed_demo)
+- **dashboard**: templates, views, selectors used by UI pages; should not contain business logic
+- **accounts**: authentication, roles/groups (admin/operator/viewer) minimal
+
+### 10) Data Model (High-Level)
+- Hostel has many Units
+- Unit belongs to a Hostel (unit_type: FLOOR or CLUSTER)
+- Asset belongs to a Hostel and optionally a Unit (e.g., unit-level meter)
+- Device belongs to an Asset
+- Sensor belongs to a Device
+- Reading belongs to a Sensor (ts, value)
+- Alert can link to Hostel/Unit/Asset/Sensor (optional fields)
+- ThresholdRule can be global (null hostel) or per-hostel override
+- ForecastRun scope: hostel or unit; stores method baseline/AI and forecast horizon; has ForecastPoint rows (timestamp, predicted, optional bounds)
+
+### 11) Required UI Pages
+All pages use same layout (sidebar + topbar + search + theme toggle):
+
+1. Campus Overview Dashboard
+   - KPIs, charts, top hostels, critical alerts, low tanks, offline sensors
+   - Campus inlet vs hostel sum comparison
+   - Forecast strip (baseline)
+
+2. Hostels List / Comparison
+   - table with usage, alerts, quality badge, predicted next 24h
+
+3. Hostel Detail (tabs)
+   - overview charts
+   - units leaderboard with predicted usage
+   - quality/pressure/tanks sections (can be phased)
+
+4. Units Explorer
+   - list/grid of all units under hostel
+   - sort by usage/predicted/alerts
+
+5. Unit Detail
+   - usage trend chart
+   - continuous flow detector widget
+   - alerts scoped to unit
+   - predicted next 24h chart (baseline now, AI later)
+
+6. Alerts Center
+   - filters + acknowledge
+   - (optional) detail panel with mini chart
+
+7. Water Quality Dashboard
+   - latest readings, compliance badges, trends
+
+8. AI & Forecasting Center
+   - choose scope (campus/hostel/unit)
+   - show forecast chart + model status (not trained / baseline)
+   - recommendations panel (rules now, AI later)
+
+9. Reports & Insights
+   - report cards + export actions (CSV)
+
+10. Settings (Thresholds & Rules)
+   - configure thresholds for leak/pressure/tank/quality
+
+### 12) Seed / Demo Data Requirement (Very Important)
+Provide a management command (e.g., `python manage.py seed_demo`) to populate:
+- 2 hostels
+- floors + washroom clusters per hostel
+- assets/devices/sensors
+- 7 days time-series readings with realistic patterns
+- include at least:
+  - one leak scenario at night
+  - one blockage scenario
+  - one quality exceedance scenario
+So dashboards and alerts show meaningful insights immediately.
+
+### 13) Implementation Guidance to the AI (How to Generate Code)
+When generating code:
+- Ask clarifying questions only if required.
+- Keep implementation simple (MVP) but clean.
+- Use:
+  - `selectors.py` in dashboard for query composition
+  - `services.py` in ops for alert logic/forecast logic
+- Use `json_script` for safe chart data embedding in templates.
+- Prefer named URL patterns.
+- Add docstrings and readable code style.

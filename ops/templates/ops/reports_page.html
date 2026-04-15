@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reports & Insights | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+
+{% block content %}
+<section class="rp-summary-grid">
+    <article class="rp-card rp-summary-card">
+        <h3>Weekly consumption report</h3>
+        <p>Today Used</p>
+        <p><strong>{{ weekly_consumption }} L</strong></p>
+        <p>Hostel / Unit</p>
+    </article>
+
+    <article class="rp-card rp-summary-card">
+        <h3>Night wastage report (00:00-05:00)</h3>
+        <p>Total Unit</p>
+        <p><strong>{{ night_wastage }} L</strong></p>
+        <p>Unit washroom A</p>
+    </article>
+
+    <article class="rp-card rp-summary-card">
+        <h3>Tank refill summary</h3>
+        <p>Tank refill</p>
+        <p><strong>{{ tank_refill_events }}</strong></p>
+        <p>Tank refill summary</p>
+    </article>
+
+    <article class="rp-card rp-summary-card">
+        <h3>Quality compliance report</h3>
+        <p>Quality Status</p>
+        <p><strong>Quality compliance {{ quality_compliance }}%</strong></p>
+        <p>Status scenario</p>
+    </article>
+</section>
+
+<section class="rp-card rp-insights-card">
+    <h3>Insights</h3>
+    <div class="rp-insights-grid">
+        <article>
+            <h4>Units with highest night flow</h4>
+            <table class="table table-sm rp-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Asset</th>
+                        <th>Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in high_night_units %}
+                    <tr>
+                        <td>{{ row.rank }}</td>
+                        <td>{{ row.asset }}</td>
+                        <td>{{ row.usage }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-secondary">No night-flow data.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </article>
+
+        <article>
+            <h4>Hostels with repeated leak alerts</h4>
+            <table class="table table-sm rp-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Asset</th>
+                        <th>Events</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in repeated_leak_hostels %}
+                    <tr>
+                        <td>{{ row.rank }}</td>
+                        <td>{{ row.asset }}</td>
+                        <td class="text-danger-emphasis">{{ row.events }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-secondary">No repeated alerts.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </article>
+
+        <article>
+            <h4>Inlet vs outlet discrepancy days</h4>
+            <table class="table table-sm rp-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Asset</th>
+                        <th>Discrepancy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in discrepancy_days %}
+                    <tr>
+                        <td>{{ row.rank }}</td>
+                        <td>{{ row.asset }}</td>
+                        <td>{{ row.discrepancy }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-secondary">No discrepancy data.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </article>
+    </div>
+
+    <div class="rp-actions">
+        <button class="btn btn-outline-info btn-sm" type="button">Export CSV</button>
+        <button class="btn btn-outline-secondary btn-sm" type="button">Export PDF (placeholder)</button>
+    </div>
+</section>
+{% endblock %}

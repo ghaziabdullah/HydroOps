@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Water Quality | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/iot.css' %}">{% endblock %}
+
+{% block content %}
+<script type="application/json" id="qualityChartData">
+{
+  "phTrend": {{ ph_trend_json|safe }},
+  "turbidityTrend": {{ turbidity_trend_json|safe }}
+}
+</script>
+
+<section class="wq-kpi-grid">
+    <article class="wq-card wq-kpi-card">
+        <p class="wq-kpi-label">Overall Quality Status</p>
+        <p class="wq-kpi-value {% if overall_status == 'Optimal' %}good{% else %}danger{% endif %}">{{ overall_status }}</p>
+        <span class="wq-pill green">Green</span>
+    </article>
+    <article class="wq-card wq-kpi-card">
+        <p class="wq-kpi-label">pH</p>
+        <p class="wq-kpi-value">{{ ph_value }}</p>
+    </article>
+    <article class="wq-card wq-kpi-card">
+        <p class="wq-kpi-label">Turbidity (NTU)</p>
+        <p class="wq-kpi-value">{{ turbidity_value }} NTU</p>
+    </article>
+    <article class="wq-card wq-kpi-card">
+        <p class="wq-kpi-label">TDS/Conductivity (ppm)</p>
+        <p class="wq-kpi-value">{{ tds_value }} ppm</p>
+    </article>
+    <article class="wq-card wq-kpi-card">
+        <p class="wq-kpi-label">Temperature</p>
+        <p class="wq-kpi-value">{{ temperature_value }}&deg;C</p>
+    </article>
+    <article class="wq-card wq-kpi-card">
+        <p class="wq-kpi-label">Active Quality Alerts</p>
+        <p class="wq-kpi-value danger">{{ quality_alerts }}</p>
+    </article>
+</section>
+
+<section class="wq-trend-grid">
+    <article class="wq-card wq-chart-card">
+        <div class="wq-chart-head">
+            <h3>pH Trend (24h)</h3>
+            <div class="wq-mini-range">
+                <button type="button" class="active">24h</button>
+                <button type="button">7d</button>
+                <button type="button">30d</button>
+            </div>
+        </div>
+        <canvas id="phTrendChart" height="140"></canvas>
+    </article>
+
+    <article class="wq-card wq-chart-card">
+        <div class="wq-chart-head">
+            <h3>Turbidity Trend (24h)</h3>
+            <div class="wq-mini-range">
+                <button type="button" class="active">24h</button>
+                <button type="button">7d</button>
+                <button type="button">30d</button>
+            </div>
+        </div>
+        <canvas id="turbidityTrendChart" height="140"></canvas>
+    </article>
+</section>
+
+<section class="wq-card wq-table-card">
+    <h3>Latest Quality readings by Hostel by asset</h3>
+    <div class="table-responsive">
+        <table class="table wq-table mb-0">
+            <thead>
+                <tr>
+                    <th>Hostel</th>
+                    <th>Key Asset</th>
+                    <th>Compliance</th>
+                    <th>pH</th>
+                    <th>Turbidity</th>
+                    <th>TDS/Conductivity</th>
+                    <th>Temperature</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in table_rows %}
+                <tr>
+                    <td>{{ row.hostel }}</td>
+                    <td>{{ row.asset }}</td>
+                    <td><span class="wq-pill green">Compliance</span></td>
+                    <td>{{ row.ph }}</td>
+                    <td>{{ row.turbidity }} NTU</td>
+                    <td>{{ row.tds }} ppm</td>
+                    <td>{{ row.temperature }}&deg;C</td>
+                    <td><span class="wq-pill {% if row.status == 'Compliance' %}green{% else %}red{% endif %}">{{ row.status }}</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-secondary">No quality data available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block app_js %}<script src="{% static 'js/iot.js' %}"></script>{% endblock %}

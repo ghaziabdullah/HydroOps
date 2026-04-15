@@ -1,0 +1,897 @@
+HYDROOPS — UI SPEC (TEXT-ONLY, AI-READY)
+Based on uploaded screenshots: image1..image4
+Date reference: 2026-03-28
+Primary goal: Recreate the same UI in Django Templates + Bootstrap 5 + Chart.js with Dark/Light themes + toggle.
+
+============================================================
+1) GLOBAL APP SHELL (APPLIES TO ALL PAGES)
+============================================================
+
+1.1 Layout
+- App uses a fixed left sidebar + top header (topbar) + scrollable main content area.
+- Layout grid:
+  - Sidebar: fixed, ~260px width desktop; collapsible to icon-only (~76px) using a collapse button near the logo.
+  - Main: full height, with topbar row and content below.
+  - Content uses card-based sections with generous padding and rounded corners.
+
+1.2 Sidebar (Left Navigation)
+- Top-left brand:
+  - HydroOps logo icon + “HydroOps” text.
+  - Collapse/expand button to the right of brand (double-chevron style).
+- Navigation items (vertical list):
+  1) Overview
+  2) Hostels
+  3) Units
+  4) Alerts
+  5) Water Quality
+  6) Reports & Insights
+  7) AI & Forecasting
+  8) Maintenance
+- Bottom section:
+  - Settings item pinned near bottom.
+- Nav item styling:
+  - Each nav item has an icon at left.
+  - Active item uses highlighted pill/rounded background and brighter text.
+  - Inactive items are muted.
+- Hover: subtle background + slightly brighter icon/text.
+
+1.3 Topbar (Header)
+- Left side:
+  - Current page title or a dropdown-like title:
+    - Example: “Campus Overview Dashboard” (with a small caret down).
+    - Example: “Main Campus Hostels List / Comparison”
+    - Example: “Main Campus Hostel Detail Dashboard”
+  - On light theme campus page shows “NUST H-12 Campus” in header area; include campus name in title area (optional).
+- Center-left controls:
+  - Date-range selector group: “24h / 7d / 30d” with “24h” active in the screenshots.
+  - A small rounded “24h” button appears to the right (acts like apply/current selection indicator).
+- Center-right:
+  - Search input with placeholder: “Search hostel, unit, sensor”
+- Right side:
+  - Notification bell icon with badge count (e.g., red badge “12”).
+  - User pill/menu: avatar circle + role/name “operator” + dropdown caret.
+
+1.4 Common Cards / Surfaces
+- All content is inside “cards” with:
+  - Rounded corners (large radius ~16px).
+  - Subtle border.
+  - Soft shadow (light theme) or soft glow/contrast (dark theme).
+  - Headings are medium-weight; key numbers large.
+
+1.5 Typography
+- Modern sans-serif (Bootstrap default ok, or Inter).
+- KPI numbers large (32–40px).
+- Labels small/medium (12–14px) with muted color.
+- Table text medium (14px).
+
+1.6 Buttons / Pills / Badges
+- Pills used for:
+  - Status: Optimal / Green, Warning / Orange, Critical / Red.
+  - Filter chips at top of tables.
+- “View” action is a small outlined button (rightmost table column).
+- Severity pills appear inside alert lists.
+
+1.7 Charts (Chart.js)
+- Line charts:
+  - 2 series used: “Inlet” and “Sum of Hostels”.
+  - Series colors (dark theme): cyan/teal for Inlet; purple/violet for Sum.
+  - Filled area under the line (soft gradient).
+  - Smooth curves.
+- Chart controls:
+  - Top-right inside chart card: a small range dropdown: “24h / 7d / 30d”.
+- Chart annotation:
+  - A vertical highlighted region labeled “Suspected Leak Window” (translucent red/pink overlay).
+- Bar chart:
+  - “Top Consuming Hostels Today” bar chart with a cyan/purple gradient bars.
+- Donut chart:
+  - “Usage Distribution by Hostel” donut with multiple bright segments.
+
+1.8 Responsiveness (Required)
+- Desktop: multi-column cards (KPIs in one row, charts with right-side alert stack).
+- Mobile:
+  - Sidebar collapses to icons or becomes offcanvas.
+  - KPI cards become horizontally scrollable or wrap 1-per-row.
+  - Charts full width, right-side panels move below.
+
+============================================================
+2) THEME SYSTEM (DARK + LIGHT)
+============================================================
+
+2.1 Theme Toggle Behavior (Global)
+- Default theme: DARK.
+- Toggle located in topbar (you can add it near search or user menu).
+- Persist selection in localStorage key: "hydroops_theme" = "dark" | "light".
+- Apply theme via:
+  - <html data-theme="dark"> or <body data-bs-theme="dark"> style approach.
+  - CSS variables set on [data-theme].
+
+2.2 Dark Theme (Inferred from images 1–3)
+- Overall background: deep navy/charcoal gradient.
+- Sidebar background: slightly darker than content.
+- Card background: dark slate with subtle gradient.
+- Borders: low-contrast, cool-toned.
+- Text: near-white; muted text gray-blue.
+- Accent primary: teal/cyan glow for active nav and some highlights.
+- Secondary accent: violet/purple for second chart series.
+- Status colors:
+  - Green: success/optimal.
+  - Orange: warning.
+  - Red: critical.
+
+2.3 Light Theme (Derived from image4; apply “not plain white”)
+Light theme must feel “soft, modern, slightly bluish” not pure white:
+- Base background: very light cool gray/blue (#F3F7FB to #F7FAFF range).
+- Sidebar background: slightly different tint from main background (a bit more blue, very subtle).
+- Cards:
+  - Background: off-white with slight blue tint (#F8FBFF) + subtle shadow.
+  - Border: light gray-blue (#E1EAF3).
+- Text:
+  - Primary text: near-black but softened (#0F172A-ish).
+  - Muted text: slate gray (#64748B-ish).
+- Charts:
+  - Gridlines visible but very faint.
+  - Same series colors as dark theme but slightly desaturated.
+- Alert highlight (“Suspected Leak Window”):
+  - Keep soft red translucent overlay; ensure text is readable on light background.
+- Buttons/pills:
+  - Use filled soft pills for statuses; keep contrast high enough for accessibility.
+- Overall look:
+  - Use soft shadows, not harsh borders.
+  - Keep spacing and rounded corners identical to dark theme for consistency.
+
+RECOMMENDED LIGHT THEME TOKENS (CSS variables)
+- --bg: #F3F7FB
+- --sidebar-bg: #EEF4FA
+- --surface: #F8FBFF
+- --surface-2: #FFFFFF
+- --border: #E1EAF3
+- --text: #0F172A
+- --text-muted: #64748B
+- --primary: #14B8A6 (teal)
+- --secondary: #8B5CF6 (violet)
+- --info: #38BDF8
+- --success: #16A34A
+- --warning: #F59E0B
+- --danger: #EF4444
+
+============================================================
+3) PAGE: CAMPUS OVERVIEW DASHBOARD
+(Images: dark=image1, light=image4)
+============================================================
+
+3.1 Page Header / Controls
+- Title: “Campus Overview Dashboard” (dark) / “NUST H-12 Campus” (light).
+- Controls row in topbar:
+  - Time range: 24h / 7d / 30d, with 24h active.
+  - Search field: “Search hostel, unit, sensor”.
+  - Notifications bell + badge.
+  - User menu “operator”.
+
+3.2 KPI Row (Top cards, 6 items)
+Cards left-to-right:
+1) “Total Used Today (L)”
+   - Big value: “245,100 L”
+2) “Active Hostels (online/total)”
+   - Value: “18/18”
+3) “Unacknowledged Alerts”
+   - Value: “5”
+   - Small alert icon on card (red triangle)
+4) “Inlet vs Hostels Difference (Leak indicator)”
+   - Value: “+4.2% - Watch”
+   - Emphasize in warning color (orange).
+5) “Quality Status”
+   - Value: “Optimal”
+   - Badge/pill: “Green”
+   - Has check icon on card.
+6) “Peak Hour”
+   - Value: “8:15 AM - 22k L/hr”
+
+3.3 Main Middle Section (2 columns)
+Left (wide): Large Line Chart Card
+- Title: “Campus Inlet Flow vs Sum of Hostel Flows (last 24h)”
+- Legend items:
+  - Inlet (teal/cyan)
+  - Sum of Hostels (purple)
+- X-axis shows time labels (00:00, 03:00, 06:00 ...).
+- Y-axis shows 0..10k type scale.
+- Annotation region:
+  - Highlight vertical area with label “Suspected Leak Window”
+  - Marked by dashed vertical borders.
+
+Right (narrow): Stacked side cards
+A) “Critical Alerts Now”
+   - List of 5 items in light theme example:
+     - “Leak: Hostel A”
+     - “Blockage: Hostel B”
+     - “Overflow: Washroom C”
+     - “Leak: Hostel D”
+     - “Offline Sensor: Unit E”
+   - Each row has a “Severity” pill at right (orange/red).
+B) “Tanks Low / Refill Needed”
+   - Placeholder text in dark: “Refill Needed”
+   - In light: includes “pH, Turbidity” + a “Compliance badge” pill (green).
+   - Keep as a compact card listing the most urgent items (2–5 items).
+C) “Offline Sensors”
+   - Card listing offline sensors; placeholder “Offline sensors”.
+
+3.4 Bottom Section
+Left/center: Bar Chart card
+- Title: “Top Consuming Hostels Today”
+- Bars labeled Hostel A, Hostel B, Hostel C, ... (horizontal labels).
+- Bar style: vertical bars with cyan-to-purple gradient.
+
+Overlay / Floating mini card (bottom-right on screenshot)
+- Small card overlaying bottom area:
+  - Title: “Forecast: Next 24h Campus Demand”
+  - Includes a mini line chart dashed style and “Predicted” label.
+  - Has a green pill on top right: “AI-ready (baseline active)”
+- Implementation: position absolute within container on large screens; on mobile render as normal card below.
+
+============================================================
+4) PAGE: HOSTELS LIST / COMPARISON
+(Image: dark=image2)
+============================================================
+
+4.1 Header
+- Title: “Main Campus Hostels List / Comparison”
+- Same topbar controls (range + search + notif + user).
+
+4.2 Filter Chips Row (above table)
+- Pills (left-to-right):
+  - “High Night Flow”
+  - “Quality Warnings”
+  - “Predicted Spike”
+  - “Has Critical Alerts”
+- Active/inactive states: subtle fill change.
+
+4.3 Main Content Layout (2 columns)
+Left (wide): Hostels Table card
+- Table columns:
+  1) Hostel Name
+  2) Today Usage (L)
+  3) Night Flow Risk
+  4) Predicted Next 24h (L)
+  5) Alerts
+  6) Lowest Tank Level (%)
+  7) Quality Badge
+  8) Action (button)
+- Row content patterns:
+  - Today Usage is cyan/teal colored number.
+  - Night Flow Risk uses a small amber indicator icon/pill (looks like a tiny warning block).
+  - Predicted Next 24h is cyan/teal number.
+  - Alerts column contains:
+    - red “Critical” pill with a count (e.g., “Critical 1”, “Critical 2”)
+    - orange warning circle/badge with count
+  - Lowest Tank Level shows % values (70%, 50%, etc.)
+  - Quality badge: green pill “Optimal”
+  - Action: outlined button “View”
+
+Right (narrow): Donut Chart card
+- Title: “Usage Distribution by Hostel”
+- Donut segments labeled with hostel names (Hostel A, B, C, D).
+- Use bright palette matching app accents.
+
+============================================================
+5) PAGE: HOSTEL DETAIL DASHBOARD (OVERVIEW TAB)
+(Image: dark=image3)
+============================================================
+
+5.1 Breadcrumb + Tabs
+- Breadcrumb line: “Main Campus > Hostels > Hostel A”
+- Tabs row (pill-style) under breadcrumb:
+  - Overview (active)
+  - Usage
+  - Units
+  - Tanks
+  - Pressure
+  - Quality
+  - Alerts
+  - Forecast
+
+5.2 KPI Row (6 cards)
+Left-to-right:
+1) “Today Usage (L)” -> “18,500 L”
+2) “Current Flow (L)” -> “45 L/min”
+3) “Pressure Health” -> “Good” + small value “3.2 bar” + warning icon near title
+4) “Night Flow Indicator” -> “Warning - Orange”
+5) “Tank Refill Risk” -> “Low” + small info icon near title
+6) “Quality Status” -> “Optimal” + note “Green Badge” + check icon near title
+
+5.3 Middle Layout (3 columns feel)
+Left (wide, stacked charts):
+A) Line chart card “Usage Trend (24h)”
+   - Top-right small control “24h / 30d” with 24h active.
+B) Line/area chart card “Pressure Trend (24h)”
+
+Center (medium): “Units Leaderboard” card
+- Subtitle: “Top Consuming Units”
+- Table columns:
+  - Unit name (e.g., “Floor 2”, “Floor 3”)
+  - Subtext under unit: “Washroom Cluster B/D”
+  - Current Usage (L) (teal number)
+  - Predicted Next 24h (L) (teal number)
+- Rows show multiple units.
+
+Right (narrow): “AI Recommendations” card
+- Title: “AI Recommendations”
+- Green pill: “AI-ready (alpha v1)”
+- Bullet list items:
+  - “Possible leak suspected in Washroom Cluster B (85% confidence)”
+  - “Recommend inspection of flush tanks”
+- Note: For MVP, these are rule-based recommendations with AI-ready labeling.
+
+============================================================
+6) COMPONENT RULES (REUSABLE)
+============================================================
+
+6.1 Status Badges
+- Optimal/Good: green pill + optional check icon.
+- Warning: orange pill + warning icon.
+- Critical: red pill.
+
+6.2 Alert List Item (Used in “Critical Alerts Now”, Alerts Center later)
+- Left text: “Type: Scope” (e.g., “Leak: Hostel A”)
+- Right: small severity pill.
+- Row hover: background highlight.
+
+6.3 “AI-ready” Labeling
+- Any AI panel must clearly show:
+  - “AI-ready (baseline active)” OR “AI-ready (alpha v1)”
+  - Small tooltip text: “Using baseline/rules until models are integrated.”
+
+============================================================
+7) IMPROVEMENT SUGGESTIONS (OPTIONAL TO APPLY)
+============================================================
+
+Improvement Suggestion 1: Add explicit theme toggle icon/button in topbar
+- Because screenshots show no visible toggle control. Add a sun/moon icon next to search or user menu.
+
+Improvement Suggestion 2: Standardize time-range control
+- Current shows “24h / 7d / 30d” plus an extra “24h” pill. Consider making:
+  - either a segmented control only (no extra pill),
+  - or a dropdown with an “Apply” button.
+
+Improvement Suggestion 3: Light theme contrast
+- Ensure teal/purple chart lines remain readable against very light gridlines; slightly darken series lines in light mode.
+
+============================================================
+8) WHAT YOU SHOULD UPLOAD NEXT (TO COMPLETE THE UI SPEC)
+============================================================
+Please upload screenshots for:
+- Units Explorer (list/grid)
+- Unit Detail (usage + continuous flow widget + alerts + forecast)
+- Alerts Center (filters + acknowledge)
+- Water Quality dashboard (cards + trends)
+- AI & Forecasting center (scope switch + model status + recommendations)
+- Reports & Insights
+- Settings (Thresholds & Rules)
+- Maintenance page (if it exists)
+
+HYDROOPS — UI SPEC (APPEND)
+Append these sections to the existing UI_SPEC.txt.
+New screenshots covered: image5..image11
+
+============================================================
+9) PAGE: UNITS EXPLORER (HOSTEL-LEVEL UNITS GRID)
+(Image: dark=image5)
+============================================================
+
+9.1 Header / Context
+- Sidebar: “Units” is active.
+- Topbar:
+  - Page title: “Main Campus Units Detail Dashboard” (dropdown caret).
+  - Time range segmented control: “24h / 7d / 30d” with “24h” active.
+  - Search input: “Search hostel, unit, sensor”.
+  - Notification bell with badge “12”.
+  - User menu: avatar + “operator”.
+- Breadcrumb: “Main Campus > Hostels > Hostel A > Units Explorer”
+- Page heading in content: “Hostel A”
+
+9.2 Controls (Top-right of content)
+- “Sort by:” label + dropdown (rounded select).
+- Dropdown options:
+  - usage
+  - predicted usage
+  - alerts
+
+9.3 Units Grid (Card layout)
+- Grid shows a mix of FLOOR units and WASHROOM CLUSTER units.
+- Card design: rounded glassmorphism surface with border + soft glow.
+- Each unit card displays:
+  - Title: unit name (e.g., “Floor 1”, “Floor 2”, “Washroom Cluster B”, “Washroom Cluster C”, “Washroom Cluster D”).
+  - Metric row 1: “Current Flow” with value (e.g., “50 L/min”, “45 L/min”, “29 L/min”, etc.)
+  - Metric row 2: “Predicted Next 24h” with value in liters (e.g., “245,500 L”, “245,000 L”, “235,000 L”, “99,000 L”, “170,000 L”)
+  - Alerts count line: “Alerts: 2” (red/orange number emphasis)
+  - Risk pill at bottom-right of card:
+    - Orange pill text: “High Risk” (sometimes shown as “Orange: High Risk”)
+    - Green pill text: “Low Risk”
+- Layout suggestion:
+  - Desktop: 3 cards per row typical; auto-wrap.
+  - Mobile: 1 card per row.
+
+9.4 Interaction
+- Clicking a unit card navigates to Unit Detail page for that unit.
+- Hover: subtle lift + border highlight.
+
+============================================================
+10) PAGE: UNIT DETAIL DASHBOARD (UNIT-LEVEL)
+(Image: dark=image6)
+============================================================
+
+10.1 Header / Context
+- Topbar consistent with rest of app.
+- Breadcrumb:
+  - “Main Campus > Hostel A > Floor 2 > Washroom Cluster B”
+
+10.2 Top Section (2 columns)
+LEFT: Forecast chart card
+- Title: “Predicted Water Use Next 24h”
+- Chart: line/area chart; last segment shows prediction using dashed line.
+- Range control at top-right inside card:
+  - “24h / 7d / 30d” with “24h” active.
+
+RIGHT: Forecast summary card
+- Title: “Forecast”
+- Text lines:
+  - “Predicted total (e.g., 850 L)”
+  - “confidence ±5%”
+  - “drivers (future AI): historical pattern, occupancy, events.”
+
+10.3 Middle Section (2 columns)
+LEFT: Usage chart card
+- Title: “Usage chart last 24h”
+- Chart: line/area chart with same visual style.
+- Range control: “24h / 7d / 30d” (24h active).
+
+RIGHT: Continuous Flow Detector card
+- Title: “Continuous Flow Detector”
+- Status line:
+  - “00:00–05:00 continuous flow detected: 42 min” (the “42 min” emphasized in warning color)
+- A horizontal multi-color indicator bar (green→yellow→orange→red style).
+- “Suggested actions:” label + buttons:
+  1) “Awareness notice”
+  2) “Create maintenance ticket”
+  3) “Compare similar units”
+- Buttons are pill/rounded with small icons.
+
+10.4 Bottom Section (Full-width table)
+Alerts table card
+- Card title: “Alerts”
+- Table columns visible:
+  - Alert (e.g., “Leak suspected”, “Abnormal usage”, “Sensor offline”)
+  - Name (e.g., “Washroom cluster B”)
+  - Severity (pill e.g., “Critical”, “Warning”)
+  - Another Severity/Color pill (e.g., “Red”, “Amber”)
+  - Row action button at far right: “Acknowledge”
+- Severity styling:
+  - Critical: red pill.
+  - Warning: amber/orange pill.
+
+============================================================
+11) PAGE: ALERTS CENTER (MASTER LIST + DETAIL PANEL)
+(Image: dark=image7)
+============================================================
+
+11.1 Header / Context
+- Page title: “HydroOps Alerts Center” (dropdown caret).
+- Sidebar: Alerts active.
+- Topbar includes time range controls + search + notifications + user.
+
+11.2 Main Layout
+- Split layout:
+  - Left: Alert list + filters (wide panel).
+  - Right: Alert detail drawer/panel (narrow panel), with close “X”.
+
+11.3 Filters (Left panel top)
+- Section heading: “Alert list”
+- Filter chip row with “type” label and chips:
+  - Leak suspected
+  - Blockage suspected
+  - Overflow risk
+  - Quality warning
+  - Sensor offline
+- Second filter row:
+  - “hostel” dropdown (selected: “Main Campus”)
+  - “unit” dropdown (selected: “Washroom B”)
+  - “Time range” control showing options “24h / 7d / 3d / 30d” (24h active)
+
+11.4 Alerts Table/List (Left panel)
+- Columns:
+  - Alert (type)
+  - Name (scope, e.g., “Washroom cluster B”)
+  - Severity (pill: “Critical” or “Warning”)
+  - A small right-side pill “Info” (category/tag)
+- Selected row uses a highlighted background.
+
+11.5 Alert Detail Panel (Right)
+- Title: “Leak suspected in Washroom Cluster B” with close “X”.
+- Mini chart card:
+  - Label: “Water usage”
+  - Range controls “24h / 7d / 30d”
+  - Highlighted region (vertical translucent area) showing suspected window.
+- Suggested cause section:
+  - Title: “Suggested cause (rule engine v1)”
+  - Bullet items like:
+    - “Continuous flow > 30min”
+    - “Continuous flow > 30min”
+    - “Continuous flow > 1min”
+- Collapsible section:
+  - “AI explanation (future)” (accordion/collapse)
+- Actions (buttons):
+  - “Acknowledge” (primary)
+  - “Create Work Order”
+  - “View unit data”
+
+============================================================
+12) PAGE: WATER QUALITY DASHBOARD
+(Image: dark=image8)
+============================================================
+
+12.1 Header / Context
+- Page title: “HydroOps Water Quality Dashboard”
+- Sidebar: Water Quality active.
+- Topbar includes time range + search + notifications + user.
+
+12.2 KPI Cards Row (6 cards)
+1) “Overall Quality Status”:
+   - Value: “Optimal”
+   - Green pill: “Green”
+   - Check icon near top-right of the card.
+2) “pH” -> “7.2”
+3) “Turbidity (NTU)” -> “0.8 NTU”
+4) “TDS/Conductivity (ppm)” -> “250 ppm”
+5) “Temperature” -> “22°C”
+6) “Active Quality Alerts” -> “1”
+   - Warning icon near top-right of the card.
+
+12.3 Trend Charts (Two cards side-by-side)
+A) “pH Trend (24h)”
+B) “Turbidity Trend (24h)”
+- Each chart has:
+  - Range control “24h / 7d / 30d” (24h active).
+  - Legend with 3 statuses:
+    - Optimal (green)
+    - Warning (yellow)
+    - Critical (red)
+  - Background threshold bands/zones (green/yellow/red) behind the line to indicate compliance zones.
+  - Dashed horizontal threshold lines.
+
+12.4 Latest Readings Table (Bottom full-width card)
+- Title: “Latest Quality readings by Hostel by asset”
+- Table columns (as shown):
+  - Hostel
+  - Key Asset
+  - Compliance (pill “Compliance”)
+  - pH
+  - TDS/Conductivity
+  - Temperature
+  - Compliance (rightmost, also pill)
+- Rows include examples like Washroom A/B/C with Cluster A/B/C.
+
+============================================================
+13) PAGE: AI & FORECASTING CENTER
+(Image: dark=image9)
+============================================================
+
+13.1 Header / Context
+- Page title: “HydroOps AI & Forecasting Center”
+- Sidebar: “AI & Forecasting” active.
+- Topbar: search + notifications badge “12” + user “operator”.
+  - (This screenshot does not show the 24h/7d/30d group in the topbar; keep global behavior consistent anyway.)
+
+13.2 Top Controls Row (4 big selector cards)
+Four selectors in a row (each is a rounded card with a control):
+1) Scope selector:
+   - Label: “Campus / Hostel / Unit”
+   - Control: segmented/pill options “Campus / Hostel / Unit” (Campus selected in screenshot).
+2) “Select a Hostel”
+   - Dropdown: selected “Washroom A” (note: label says hostel but value reads like unit; fix naming in implementation).
+3) “Select a Unit”
+   - Dropdown: “Floor & washroom cluster”
+4) “Forecast horizon”
+   - Segmented options: “6h / 24h / 7d” (6h active).
+
+(Implementation improvement suggestion: make selector 2 consistent: if label is “Select a Hostel”, values must be hostels; if selecting unit, rename label accordingly.)
+
+13.3 Main Chart + Model Status (2 columns)
+LEFT: Main forecast chart card
+- Title: “Forecast Water Usage for chosen asset”
+- Legend:
+  - “Predicted”
+  - “$randing” (typo-like label visible; should be “Baseline” or “Actual”; fix in final UI text)
+- Range control inside chart: “24h / 7d / 30d”
+- Chart styling: thick teal line + glow/gradient fill.
+
+RIGHT: Model status card
+- Title: “Glassmorphism model”
+- Lines:
+  - “Model: Not trained (demo baseline)”
+  - “Last trained: —”
+  - “Metric: MAPE —”
+
+13.4 Bottom Row (3 panels)
+A) “Top predicted spikes tomorrow”
+- Small table with columns:
+  - Asset
+  - Predicted usage
+- Example rows: Washroom A/B/C with Cluster A/B/C + values like “2.10 L/hhr” (typo); fix to “L/hr”.
+
+B) “Anomalies (rules now, AI later)”
+- Table columns:
+  - Event
+  - Events
+- Example rows: “Cluster 0/1/2” with “Flagged event 10 pm”.
+
+C) “Recommendations”
+- Subheading: “Insights”
+- List items (scrollable):
+  - “Review setpoints”
+  - “Review setpoints for inwashroom setpoints” (typo; refine)
+  - “Review setpoints for current setpoints”
+- Use simple list group with left colored indicator bar.
+
+============================================================
+14) PAGE: REPORTS & INSIGHTS
+(Image: dark=image10)
+============================================================
+
+14.1 Header / Context
+- Page title: “HydroOps Reports & Insights”
+- Sidebar: “Reports & Insights” active.
+- Topbar includes search + notifications + user.
+
+14.2 Top Report Cards Row (4 cards)
+1) “Weekly consumption report”
+   - Placeholder lines inside:
+     - “Today Used”
+     - “Hostel / Unit”
+     - “Hostel / Urans” (typo/placeholder; replace with meaningful options e.g., “Hostel / Units”)
+2) “Night wastage report (00:00–05:00)”
+   - Fields:
+     - “Total Unit”
+     - “Night wastage”
+     - “Unit washroom A”
+3) “Tank refill summary”
+   - Placeholder lines:
+     - “Tank refill”
+     - “Tank refill summary” (repeated)
+4) “Quality compliance report”
+   - Fields:
+     - “Quality Status”
+     - “Quality compliance”
+     - “Status …” (placeholder)
+
+(These appear as report “launch cards”; clicking should open a report detail or trigger export options.)
+
+14.3 Insights Section (Large table area)
+- Title: “Insights”
+- Three side-by-side insight tables within one large card region:
+A) “Units with highest night flow”
+   - Columns: Rank, Asset, Usage
+B) “Hostels with repeated leak alerts”
+   - Columns: Rank, Asset, Events
+   - “Repeated alerts” text in red.
+C) “Inlet vs outlet discrepancy days”
+   - Columns: Rank, Asset, Discrepancy (e.g., “94 L/hhr” — fix to L/hr)
+
+14.4 Export Actions
+- Bottom-right buttons:
+  - “Export CSV” (primary accent)
+  - “Export PDF (placeholder)” (secondary)
+
+============================================================
+15) PAGE: MAINTENANCE / WORK ORDERS (KANBAN)
+(Image: dark=image11)
+============================================================
+
+15.1 Header / Context
+- Page title: “Maintenance / Work Orders”
+- Sidebar: “Maintenance” active.
+- Topbar includes time range control (24h/7d/30d with 24h active) + search + notifications + user.
+
+15.2 Main Layout (3 Kanban Columns)
+- Three columns across:
+  1) “Open”
+  2) “In Progress”
+  3) “Done”
+- Each column is a tall rounded card with its own scroll area.
+- Column header includes a 3-dot menu icon (kebab) for actions.
+
+15.3 Work Order Cards (within columns)
+Card content pattern:
+- Title (large):
+  - Examples:
+    - “Leak suspected in Washroom Cluster B”
+    - “Inspect flush tank”
+    - “Check pressure sensor”
+    - “Check pressure tank”
+- Metadata lines:
+  - “Hostel ID: Hostel A/B/C/D/G …”
+  - Sometimes “Asset ID: Hostel B …”
+  - “Description: …” (short summary)
+- Right top area: small pill “Priority”
+  - Different colors (red/orange/purple/teal) depending on urgency/category.
+- Left border accent: vertical colored strip for status/priority.
+
+15.4 Interactions
+- Cards are intended to be draggable between columns (optional for MVP; can start with non-draggable).
+- Clicking a card opens detail modal/drawer (optional), with:
+  - linked alert, unit/hostel, notes, assigned-to, status change buttons.
+
+============================================================
+16) TEXT CLEANUP (RECOMMENDED FIXES FOR PRODUCTION UI COPY)
+============================================================
+
+- Replace “$randing” with a real legend label:
+  - Suggested: “Actual” and “Predicted” OR “Baseline forecast”.
+- Replace “L/hhr” with “L/hr”.
+- Fix mismatched selector labels (AI Center “Select a Hostel” showing “Washroom A”):
+  - Ensure hostels dropdown lists hostels; unit dropdown lists units.
+- Replace placeholder/typo lines in Reports cards with finalized labels.
+
+============================================================
+17) LIGHT THEME NOTE (FOR THESE PAGES)
+============================================================
+
+No light-theme versions were provided for images5–11.
+Apply the global light theme tokens already defined (Section 2.3 in UI_SPEC.txt):
+- Use off-white/blue-tinted surfaces, soft shadows, and lighter borders.
+- Ensure kanban column cards and unit cards maintain contrast with subtle shadows.
+- Keep severity colors (Critical/Warning/Success) consistent but slightly toned down for light backgrounds.
+
+HYDROOPS — UI SPEC (APPEND 2)
+Append these sections to the existing UI_SPEC.txt.
+New screenshots covered: image12..image13
+
+============================================================
+18) PAGE: MAINTENANCE / WORK ORDERS (KANBAN) — CONFIRM / FINAL
+(Image: dark=image12)
+============================================================
+
+Note: image12 is essentially a clearer repeat of the Work Orders Kanban already described (image11). Keep one canonical spec; use this to finalize details.
+
+18.1 Header / Context
+- Page title: “Maintenance / Work Orders” (dropdown caret).
+- Sidebar: “Maintenance” active.
+- Topbar:
+  - Time range segmented control: “24h / 7d / 30d” (24h active)
+  - Search input: “Search hostel, unit, sensor”
+  - Notification bell with badge “12”
+  - User menu: avatar + “operator”
+
+18.2 Kanban Columns
+Three columns (each a tall rounded “board” panel, glassmorphism style):
+1) Open
+2) In Progress
+3) Done
+- Each column header includes:
+  - Column title (left)
+  - 3-dot kebab menu (right)
+
+18.3 Work Order Card Design (within columns)
+Each work-order card includes:
+- Title (large, 2 lines allowed):
+  - Examples:
+    - “Leak suspected in Washroom Cluster B”
+    - “Inspect flush tank”
+    - “Check pressure sensor”
+    - “Check pressure tank”
+- Right-side pill badge: “Priority”
+  - Color varies (red/orange/purple/teal) to indicate urgency/category.
+- Metadata lines (smaller muted text):
+  - “Hostel ID: Hostel A/B/C/D/G …”
+  - Sometimes “Asset ID: Hostel A/B/C …” (note: spelling “Asstet” appears; fix to “Asset”)
+  - “Description: …”
+- Left accent stripe:
+  - Vertical colored line on the far-left edge of each card (color-coded).
+- Spacing:
+  - Cards separated by consistent vertical gap; boards scroll internally.
+
+18.4 Suggested Interactions (MVP-friendly)
+- Optional drag/drop between columns (later).
+- Clicking a card opens a right-side drawer:
+  - details, linked alert, assign, status change, comment log.
+- Kebab menu per column can include:
+  - “Add work order”
+  - “Sort by priority”
+  - “Export list (CSV)”
+
+============================================================
+19) PAGE: SETTINGS / THRESHOLDS & RULES (LIGHT THEME)
+(Image: light=image13)
+============================================================
+
+19.1 Header / Context
+- Light theme page (important: shows how “white theme” should look).
+- Topbar:
+  - Campus selector/title: “Main Campus” with dropdown caret.
+  - Time range selector: “24h / 7d / 30d” + active “24h” chip.
+  - Search input: “Search hostel, unit, sensor”
+  - Notifications bell with badge “12”
+  - User menu: avatar + “operator”
+- Right side in content header area:
+  - Theme toggle row: “Theme: Light” with a switch/toggle set to Light.
+
+19.2 Sidebar (Light theme variant)
+- Sidebar background is soft off-white / cool gray-blue (NOT pure white).
+- Active nav item uses a soft highlight pill (light teal tint).
+- Bottom “Settings” item is active (highlighted).
+
+19.3 Page Title
+- “Settings / Thresholds & Rules”
+
+19.4 Settings Cards / Sections (Form UI)
+The page uses large rounded cards with soft shadows and light borders.
+
+A) Leak suspected rule card (top-left)
+- Title: “Leak suspected: continuous flow threshold + duration”
+- Right side: enable/disable toggle switch (ON in screenshot).
+- Inputs (inline):
+  - Comparator + numeric threshold (e.g., “> 30”) with unit “min.” nearby
+  - Duration input: “30 min”
+(Interpretation: leak suspected if continuous flow lasts > threshold minutes, for duration minutes. In implementation, store as two numeric fields + operator.)
+
+B) Blockage suspected rule card (top-right)
+- Title: “Blockage suspected: pressure increase threshold”
+- Right side: toggle switch (ON).
+- Input:
+  - “+20 %” (numeric with percent unit)
+
+C) Another thresholds card (middle-left) [as shown]
+- The screenshot shows duplicated headings in the same block:
+  - “Blockage suspected: pressure increase threshold”
+  - “Tank low level threshold”
+- Input visible:
+  - “< 15 %”
+(Implementation suggestion: split these into two separate cards for clarity, unless you intentionally want a combined card.)
+
+D) Tank low level threshold card (middle-right)
+- Title: “Tank low level threshold”
+- Right side: toggle switch (ON).
+- Input:
+  - “< 25 %”
+
+E) Quality thresholds (wide full-width card at bottom)
+- Section title: “Quality thresholds:”
+- Right side: toggle switch (ON).
+- Inputs laid out in a multi-column grid:
+  1) pH range:
+     - shows a range like “6.5 – 8.5”
+  2) turbidity max:
+     - “< 1.0 NTU”
+  3) TDS max:
+     - “< 500 ppm”
+  4) temperature range:
+     - “15–25 °C”
+- There is also a small toggle in the lower middle area (appears OFF) — treat as optional sub-rule toggle (e.g., enable temperature checking) if needed.
+
+19.5 Form Actions (Bottom-right)
+- Primary button: “Save changes”
+- Secondary link/button: “Reset to defaults”
+
+19.6 Light Theme Visual Notes (Important — use this to refine light theme everywhere)
+- Background is a soft gradient/very light cool tone (not plain white).
+- Cards have:
+  - subtle shadow
+  - light gray-blue border
+  - slightly tinted surface (off-white)
+- Text is dark slate (not pure black).
+- Toggles are teal when enabled.
+- Inputs are pill/rounded with light borders.
+
+============================================================
+20) COPY / TYPO FIXES NOTED FROM THESE IMAGES
+============================================================
+- Replace “Asstet ID” with “Asset ID”.
+- In Settings middle-left card, remove duplicated headings or separate into distinct cards:
+  - “Blockage suspected...” and “Tank low level threshold” should not be in the same header block unless intentional.
+
+============================================================
+21) COMPLETION NOTE
+============================================================
+
+With image13 (light theme Settings page), the “white theme” visual direction is now confirmed:
+- cool, soft off-white surfaces
+- teal-accent toggles
+- gentle shadows/borders
+Apply this consistently to all other pages in light mode.

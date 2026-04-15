@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Alerts Center | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 xl:grid-cols-3">
+    <section class="app-card p-3 xl:col-span-2">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="badge text-bg-danger">Leak suspected</span>
+            <span class="badge text-bg-warning">Blockage suspected</span>
+            <span class="badge text-bg-info">Overflow risk</span>
+            <span class="badge text-bg-secondary">Quality warning</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>Alert</th><th>Scope</th><th>Severity</th><th>Action</th></tr></thead>
+                <tbody>
+                {% for alert in alerts %}
+                    <tr>
+                        <td>{{ alert.alert_type }}</td>
+                        <td>{{ alert.unit.name|default:alert.hostel.name }}</td>
+                        <td><span class="badge {% if alert.severity == 'CRITICAL' %}text-bg-danger{% else %}text-bg-warning{% endif %}">{{ alert.severity }}</span></td>
+                        <td>
+                            <form method="post" action="{% url 'ops:alert-acknowledge-api' alert.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-outline-secondary btn-sm" type="submit">Acknowledge</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="text-secondary">No active alerts.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <aside class="app-card p-3">
+        <h3 class="h6">Alert Detail</h3>
+        <p class="small text-secondary">Select an alert row to inspect details and actions.</p>
+        <button class="btn btn-primary btn-sm" type="button">Create Work Order</button>
+    </aside>
+</div>
+{% endblock %}

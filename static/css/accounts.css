@@ -1,0 +1,623 @@
+.ac-profile-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 0.9rem;
+}
+
+.ac-landing-body {
+    overflow-x: hidden;
+}
+
+.ac-landing-shell {
+    min-height: 100vh;
+}
+
+.ac-landing-hero {
+    position: relative;
+    padding: clamp(1rem, 2vw, 1.45rem) clamp(0.9rem, 2.4vw, 1.8rem) clamp(1.2rem, 2.3vw, 1.8rem);
+    background:
+        radial-gradient(1200px 540px at 8% -8%, rgba(42, 208, 193, 0.16), transparent 60%),
+        radial-gradient(980px 420px at 94% 0%, rgba(121, 105, 212, 0.16), transparent 64%),
+        linear-gradient(160deg, color-mix(in srgb, var(--bg) 96%, #0b131b 4%) 0%, color-mix(in srgb, var(--surface) 88%, #101927 12%) 100%);
+}
+
+.ac-hero-glow {
+    position: absolute;
+    border-radius: 999px;
+    pointer-events: none;
+    filter: blur(10px);
+    opacity: 0.4;
+}
+
+.ac-hero-glow.one {
+    width: 300px;
+    height: 300px;
+    left: -90px;
+    top: -70px;
+    background: radial-gradient(circle, rgba(48, 235, 215, 0.32) 0%, transparent 66%);
+    animation: acFloatA 7.2s ease-in-out infinite;
+}
+
+.ac-hero-glow.two {
+    width: 260px;
+    height: 260px;
+    right: -70px;
+    top: 18px;
+    background: radial-gradient(circle, rgba(119, 137, 255, 0.3) 0%, transparent 68%);
+    animation: acFloatB 8.5s ease-in-out infinite;
+}
+
+.ac-landing-topbar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.9rem;
+    align-items: center;
+    margin-bottom: 0.9rem;
+}
+
+.ac-landing-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.62rem;
+}
+
+.ac-brand-drop {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    color: #28d6d6;
+    background: linear-gradient(140deg, rgba(33, 212, 198, 0.18), rgba(102, 117, 214, 0.14));
+    border: 1px solid color-mix(in srgb, var(--border) 70%, var(--primary) 30%);
+}
+
+.ac-brand-drop svg {
+    width: 75%;
+    height: 75%;
+    stroke: currentColor;
+    stroke-width: 1.85;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ac-landing-brand p {
+    margin: 0;
+    color: var(--text-strong);
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 650;
+}
+
+.ac-landing-brand small {
+    color: var(--text-faint);
+    font-size: 0.73rem;
+    letter-spacing: 0.02em;
+}
+
+.ac-landing-theme {
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-gradient);
+    color: var(--text-soft);
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    padding: 0.28rem 0.66rem 0.28rem 0.36rem;
+}
+
+.ac-theme-dot {
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: #ffe7a8;
+    color: #6f5400;
+    font-size: 0.76rem;
+}
+
+.ac-landing-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1.22fr 0.95fr;
+    gap: 0.95rem;
+}
+
+.ac-landing-copy,
+.ac-auth-panel,
+.ac-feature-grid .app-card {
+    border: 1px solid color-mix(in srgb, var(--border) 82%, transparent 18%);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, white 8%), color-mix(in srgb, var(--surface-2) 95%, var(--primary) 5%));
+}
+
+.ac-landing-copy {
+    padding: 1rem;
+}
+
+.ac-landing-copy h1 {
+    margin: 0.76rem 0 0.5rem;
+    color: var(--text-strong);
+    font-size: clamp(1.4rem, 2.8vw, 2.3rem);
+    line-height: 1.15;
+    font-family: var(--font-display);
+}
+
+.ac-landing-copy h1 span {
+    color: #24c8c1;
+}
+
+.ac-landing-copy > p {
+    color: var(--text-soft);
+    margin: 0 0 0.85rem;
+    max-width: 62ch;
+}
+
+.ac-logo-row {
+    display: flex;
+    gap: 0.62rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+}
+
+.ac-logo-card {
+    width: 136px;
+    height: 62px;
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent 20%);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface) 90%, transparent 10%);
+    display: grid;
+    place-items: center;
+    padding: 0.35rem;
+}
+
+.ac-logo-card img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.ac-metric-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 0.78rem;
+}
+
+.ac-metric-row article {
+    border: 1px solid color-mix(in srgb, var(--border) 76%, transparent 24%);
+    border-radius: 12px;
+    padding: 0.52rem 0.58rem;
+    background: color-mix(in srgb, var(--surface) 92%, transparent 8%);
+}
+
+.ac-metric-row p {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-strong);
+    font-weight: 700;
+}
+
+.ac-metric-row span {
+    color: var(--text-faint);
+    font-size: 0.76rem;
+}
+
+.ac-mini-viz {
+    height: 96px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--border) 76%, transparent 24%);
+    background: color-mix(in srgb, var(--surface) 92%, transparent 8%);
+    overflow: hidden;
+}
+
+.ac-mini-viz svg {
+    width: 100%;
+    height: 100%;
+}
+
+.ac-viz-line {
+    stroke: url(#lineA);
+    stroke-width: 3;
+    fill: none;
+    stroke-dasharray: 540;
+    stroke-dashoffset: 540;
+    animation: acDrawLine 2.1s ease forwards;
+}
+
+.ac-feature-grid {
+    position: relative;
+    z-index: 2;
+    margin-top: 0.9rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.ac-feature-grid .app-card {
+    padding: 0.82rem;
+}
+
+.ac-feature-grid h3 {
+    margin: 0 0 0.42rem;
+    color: var(--text-strong);
+    font-size: 1rem;
+    font-weight: 620;
+}
+
+.ac-feature-grid p {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.9rem;
+}
+
+.ac-auth-shell {
+    min-height: 100vh;
+    display: grid;
+    align-content: center;
+}
+
+.ac-auth-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 0.95rem;
+}
+
+.ac-auth-brand,
+.ac-auth-panel {
+    padding: 1.1rem;
+}
+
+.ac-auth-brand {
+    background:
+        radial-gradient(900px 320px at 12% -8%, rgba(40, 208, 194, 0.16), transparent 58%),
+        radial-gradient(720px 280px at 95% 8%, rgba(115, 109, 220, 0.14), transparent 62%),
+        var(--surface-gradient);
+}
+
+.ac-auth-chip {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 0.24rem 0.68rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #e9fcff;
+    background: linear-gradient(120deg, #13a79f, #5f76dc);
+}
+
+.ac-auth-brand h1 {
+    margin: 0.9rem 0 0.5rem;
+    color: var(--text-strong);
+    font-size: clamp(1.35rem, 2.1vw, 2rem);
+    line-height: 1.2;
+    font-family: var(--font-display);
+}
+
+.ac-auth-brand p {
+    color: var(--text-soft);
+    margin: 0 0 0.7rem;
+}
+
+.ac-auth-brand ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--text-soft);
+    display: grid;
+    gap: 0.48rem;
+}
+
+.ac-auth-head h2 {
+    margin: 0;
+    color: var(--text-strong);
+    font-size: 1.45rem;
+    font-family: var(--font-display);
+}
+
+.ac-auth-head p {
+    margin: 0.3rem 0 0.9rem;
+    color: var(--text-faint);
+}
+
+.ac-auth-panel .form-label {
+    color: var(--text-soft);
+    font-weight: 560;
+}
+
+.ac-auth-panel .form-control {
+    border-color: color-mix(in srgb, var(--border) 86%, transparent 14%);
+    background: color-mix(in srgb, var(--surface) 92%, transparent 8%);
+    color: var(--text);
+}
+
+.ac-auth-panel .form-control:focus {
+    border-color: color-mix(in srgb, var(--primary) 56%, var(--border) 44%);
+    box-shadow: 0 0 0 0.18rem rgba(20, 184, 166, 0.2);
+}
+
+.ac-auth-panel .btn-outline-secondary {
+    border-color: color-mix(in srgb, var(--border) 86%, transparent 14%);
+    color: var(--text-soft);
+}
+
+.ac-auth-submit {
+    border: 0;
+    border-radius: 12px;
+    padding: 0.7rem 0.9rem;
+    color: #ecfcff;
+    font-weight: 680;
+    background: linear-gradient(120deg, #18b9ac 0%, #5f79df 100%);
+}
+
+.ac-auth-submit:hover {
+    filter: brightness(1.04);
+}
+
+.ac-auth-note {
+    margin-top: 0.8rem;
+    color: var(--text-faint);
+    font-size: 0.84rem;
+}
+
+html[data-theme="dark"] .ac-auth-brand,
+html[data-theme="dark"] .ac-auth-panel {
+    border-color: rgba(144, 168, 194, 0.25);
+}
+
+html[data-theme="dark"] .ac-auth-panel .form-control {
+    background: color-mix(in srgb, var(--surface) 82%, #101822 18%);
+}
+
+@media (max-width: 1100px) {
+    .ac-auth-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ac-auth-brand {
+        order: 2;
+    }
+
+    .ac-auth-panel {
+        order: 1;
+    }
+}
+
+    @keyframes acFloatA {
+        0%,
+        100% { transform: translateY(0); }
+        50% { transform: translateY(10px); }
+    }
+
+    @keyframes acFloatB {
+        0%,
+        100% { transform: translateY(0); }
+        50% { transform: translateY(-12px); }
+    }
+
+    @keyframes acDrawLine {
+        to { stroke-dashoffset: 0; }
+    }
+
+    @media (max-width: 1100px) {
+        .ac-landing-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ac-feature-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 760px) {
+        .ac-metric-row {
+            grid-template-columns: 1fr;
+        }
+
+        .ac-logo-card {
+            width: 120px;
+            height: 56px;
+        }
+    }
+
+.ac-profile-grid .app-card {
+    padding: 0.9rem;
+}
+
+.ac-hero-card {
+    grid-column: 1 / -1;
+}
+
+.ac-hero-top {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.ac-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #eefcff;
+    background: linear-gradient(135deg, #19c5bb 0%, #6280e8 100%);
+    box-shadow: 0 10px 18px rgba(56, 100, 151, 0.24);
+}
+
+.ac-kicker {
+    margin: 0;
+    color: var(--text-faint);
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.ac-hero-top h2 {
+    margin: 0.15rem 0 0;
+    font-size: clamp(1.2rem, 1.7vw, 1.75rem);
+    color: var(--text-strong);
+}
+
+.ac-subtitle {
+    margin: 0.2rem 0 0;
+    color: var(--text-soft);
+    font-size: 0.9rem;
+}
+
+.ac-status-pill {
+    margin-left: auto;
+    border-radius: 999px;
+    padding: 0.3rem 0.72rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #e7f6ff;
+    border: 1px solid transparent;
+}
+
+.ac-status-pill.active {
+    background: linear-gradient(120deg, #118654, #3cbf79);
+}
+
+.ac-status-pill.inactive {
+    background: linear-gradient(120deg, #94414a, #bf6672);
+}
+
+.ac-stat-row {
+    margin-top: 0.9rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.7rem;
+}
+
+.ac-stat-row div {
+    border: 1px solid color-mix(in srgb, var(--border) 85%, transparent 15%);
+    border-radius: 12px;
+    padding: 0.55rem 0.65rem;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, white 8%), color-mix(in srgb, var(--surface-2) 95%, var(--primary) 5%));
+}
+
+.ac-stat-row p {
+    margin: 0;
+    color: var(--text-faint);
+    font-size: 0.73rem;
+}
+
+.ac-stat-row strong {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--text-strong);
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.ac-details-card h3,
+.ac-security-card h3,
+.ac-activity-card h3 {
+    margin: 0 0 0.75rem;
+    color: var(--text-strong);
+    font-size: 1.02rem;
+    font-weight: 600;
+}
+
+.ac-detail-list {
+    margin: 0;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.ac-detail-list div {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0.65rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent 28%);
+    padding-bottom: 0.45rem;
+}
+
+.ac-detail-list dt {
+    margin: 0;
+    color: var(--text-faint);
+    font-weight: 560;
+    font-size: 0.82rem;
+}
+
+.ac-detail-list dd {
+    margin: 0;
+    color: var(--text-soft);
+    font-weight: 520;
+}
+
+.ac-security-card ul {
+    margin: 0;
+    padding-left: 1.05rem;
+    color: var(--text-soft);
+    display: grid;
+    gap: 0.45rem;
+}
+
+.ac-security-actions {
+    margin-top: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.ac-activity-card ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.52rem;
+}
+
+.ac-activity-card li {
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent 28%);
+    border-radius: 11px;
+    padding: 0.55rem 0.6rem;
+    background: color-mix(in srgb, var(--surface) 94%, transparent 6%);
+}
+
+.ac-activity-card li p {
+    margin: 0;
+    color: var(--text-soft);
+    font-weight: 540;
+}
+
+.ac-activity-card li span {
+    color: var(--text-faint);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 1200px) {
+    .ac-profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .ac-stat-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ac-status-pill {
+        margin-left: 0;
+    }
+
+    .ac-detail-list div {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .ac-stat-row {
+        grid-template-columns: 1fr;
+    }
+}

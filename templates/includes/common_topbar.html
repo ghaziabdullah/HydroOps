@@ -1,0 +1,38 @@
+{% load static %}
+<div class="common-topbar-left">
+    <div class="common-logo-wrap" aria-label="SCEE logo">
+        <img src="{% static 'media/scee-logo.png' %}" alt="SCEE logo">
+    </div>
+</div>
+
+<div class="common-topbar-right">
+    <div class="common-range-group" role="group" aria-label="Time range">
+        <button class="common-range-btn active" type="button" data-range="24h">24h</button>
+        <button class="common-range-btn" type="button" data-range="7d">7d</button>
+        <button class="common-range-btn" type="button" data-range="30d">30d</button>
+    </div>
+
+    <div class="common-search-wrap">
+        <input id="globalSearch" class="common-search" type="search" placeholder="Search hostel, unit, sensor">
+    </div>
+
+    <button id="alertsBell" class="common-bell" type="button" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 22a2.6 2.6 0 0 0 2.58-2.2H9.42A2.6 2.6 0 0 0 12 22Zm7-5.2-1.5-1.9v-4.7A5.5 5.5 0 0 0 13 4.9V4a1 1 0 1 0-2 0v.9A5.5 5.5 0 0 0 6.5 10.2v4.7L5 16.8a1 1 0 0 0 .8 1.6h12.4a1 1 0 0 0 .8-1.6Z" />
+        </svg>
+        <span id="alertCount" class="common-bell-badge">{{ critical_alerts|length|default:12 }}</span>
+    </button>
+
+    <button id="userChip" class="common-user-chip" type="button" aria-label="User profile">
+        <span class="common-user-avatar">{{ user.username|default:'o'|first|upper }}</span>
+        <span class="common-user-meta">
+            <span class="common-user-label">User</span>
+            <strong>{{ user.username|default:'operator' }}</strong>
+        </span>
+    </button>
+
+    <button id="themeToggle" class="common-theme-toggle" type="button" aria-label="Toggle theme">
+        <span class="ov-theme-icon">☀</span>
+        <span data-theme-label>Light</span>
+    </button>
+</div>

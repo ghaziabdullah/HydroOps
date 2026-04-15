@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Unit Detail | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/orgs.css' %}">{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 lg:grid-cols-3">
+    <section class="app-card p-3 lg:col-span-2">
+        <p class="small text-secondary mb-2">Main Campus > {{ unit.hostel.name }} > {{ unit.name }}</p>
+        <h3 class="h6">Predicted Water Use Next 24h</h3>
+        <canvas id="unitForecastChart" height="120"></canvas>
+    </section>
+    <aside class="app-card p-3">
+        <h3 class="h6">Continuous Flow Detector</h3>
+        <p class="small mb-2">00:00-05:00 continuous flow detected: <strong class="text-warning">42 min</strong></p>
+        <div class="progress mb-3" role="progressbar" aria-label="Flow risk" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar bg-warning" style="width: 65%"></div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-secondary btn-sm" type="button">Awareness Notice</button>
+            <button class="btn btn-outline-danger btn-sm" type="button">Create Ticket</button>
+            <button class="btn btn-outline-info btn-sm" type="button">Compare Units</button>
+        </div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block app_js %}<script src="{% static 'js/orgs.js' %}"></script>{% endblock %}

@@ -1,0 +1,154 @@
+{% load static widget_tweaks %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | HydroOps</title>
+    <script>
+        (function() {
+            try {
+                var savedTheme = localStorage.getItem("hydroops_theme") || "light";
+                document.documentElement.setAttribute("data-theme", savedTheme);
+            } catch (error) {
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+</head>
+<body class="auth-body ac-landing-body">
+<main class="ac-landing-shell">
+    <section class="ac-landing-hero">
+        <div class="ac-hero-glow one"></div>
+        <div class="ac-hero-glow two"></div>
+
+        <header class="ac-landing-topbar">
+            <div class="ac-landing-brand">
+                <div class="ac-brand-drop" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2.8C8.7 7.6 5.3 10.8 5.3 14.7A6.7 6.7 0 0 0 18.7 14.7C18.7 10.8 15.3 7.6 12 2.8Z"></path><path d="M9.2 15.1C9.2 16.8 10.6 18.2 12.3 18.2" stroke-linecap="round"></path></svg>
+                </div>
+                <div>
+                    <p>HydroOps</p>
+                    <small>Smart Water Operations Platform</small>
+                </div>
+            </div>
+
+            <button type="button" class="ac-landing-theme" id="landingThemeToggle">
+                <span class="ac-theme-dot">&#9788;</span>
+                <span data-theme-label>Light</span>
+            </button>
+        </header>
+
+        <div class="ac-landing-grid">
+            <article class="ac-landing-copy app-card">
+                <span class="ac-auth-chip">FYP Project Deployment</span>
+                <h1>Campus Water Intelligence for <span id="landingWord">Monitoring</span></h1>
+                <p>
+                    HydroOps unifies sensor telemetry, quality checks, alerts, and forecasting into one live command layer for campus hostels.
+                    Built for actionable operations instead of static reports.
+                </p>
+
+                <div class="ac-logo-row">
+                    <div class="ac-logo-card">
+                        <img src="{% static 'media/scee-logo.png' %}" alt="SCEE logo">
+                    </div>
+                    <div class="ac-logo-card">
+                        <img src="{% static 'images/nust-logo-placeholder.svg' %}" alt="NUST logo">
+                    </div>
+                </div>
+
+                <div class="ac-metric-row">
+                    <article>
+                        <p data-counter="24">0</p>
+                        <span>Monitored Hostels</span>
+                    </article>
+                    <article>
+                        <p data-counter="310">0</p>
+                        <span>Connected Sensors</span>
+                    </article>
+                    <article>
+                        <p data-counter="98">0</p>
+                        <span>Forecast Accuracy %</span>
+                    </article>
+                </div>
+
+                <div class="ac-mini-viz" aria-hidden="true">
+                    <svg viewBox="0 0 520 130" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="lineA" x1="0" x2="1">
+                                <stop offset="0%" stop-color="#36efe2"/>
+                                <stop offset="100%" stop-color="#86a4ff"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M0,88 C42,72 66,98 104,86 C138,76 170,38 202,48 C240,62 274,100 308,84 C344,66 366,18 410,28 C452,39 486,76 520,64" class="ac-viz-line"/>
+                    </svg>
+                </div>
+            </article>
+
+            <article class="ac-auth-panel app-card">
+                <div class="ac-auth-head">
+                    <h2>Sign In</h2>
+                    <p>Access dashboards, hostel intelligence, and operations center</p>
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2" role="alert">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label" for="id_username">Username</label>
+                        {{ form.username|add_class:"form-control form-control-lg"|attr:"autocomplete:username" }}
+                        {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">{% for error in form.username.errors %}{{ error }}{% endfor %}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="id_password">Password</label>
+                        <div class="input-group input-group-lg">
+                            {{ form.password|add_class:"form-control"|attr:"autocomplete:current-password" }}
+                            <button class="btn btn-outline-secondary" type="button" id="toggleLoginPassword">Show</button>
+                        </div>
+                        {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">{% for error in form.password.errors %}{{ error }}{% endfor %}</div>
+                        {% endif %}
+                    </div>
+
+                    <button class="btn ac-auth-submit w-100" type="submit">Sign in to HydroOps</button>
+                </form>
+
+                <p class="ac-auth-note mb-0">Authorized users only • Contact SCEE/IT Admin for account support.</p>
+            </article>
+        </div>
+
+        <section class="ac-feature-grid" aria-label="Platform highlights">
+            <article class="app-card">
+                <h3>Real-time Monitoring</h3>
+                <p>Track inlet, tank, and unit-level flow/pressure with fast anomaly surfacing.</p>
+            </article>
+            <article class="app-card">
+                <h3>Quality Intelligence</h3>
+                <p>pH, turbidity, and TDS status with compliance snapshots and trends.</p>
+            </article>
+            <article class="app-card">
+                <h3>Predictive Planning</h3>
+                <p>Forecast next-day demand and prioritize maintenance with AI-ready insights.</p>
+            </article>
+        </section>
+    </section>
+</main>
+
+<script src="{% static 'js/accounts.js' %}"></script>
+</body>
+</html>

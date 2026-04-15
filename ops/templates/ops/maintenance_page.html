@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Maintenance | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 lg:grid-cols-3">
+    <section class="app-card p-3">
+        <h3 class="h6">Open</h3>
+        <div class="kanban-col">
+            {% for alert in open_alerts %}
+            <article class="work-item">
+                <h4 class="h6">{{ alert.message }}</h4>
+                <p class="small text-secondary mb-1">Hostel: {{ alert.hostel.name|default:'Main Campus' }}</p>
+                <span class="badge {% if alert.severity == 'CRITICAL' %}text-bg-danger{% else %}text-bg-warning{% endif %}">Priority</span>
+            </article>
+            {% empty %}
+            <p class="small text-secondary">No open items.</p>
+            {% endfor %}
+        </div>
+    </section>
+    <section class="app-card p-3"><h3 class="h6">In Progress</h3><div class="kanban-col"></div></section>
+    <section class="app-card p-3"><h3 class="h6">Done</h3><div class="kanban-col"></div></section>
+</div>
+{% endblock %}

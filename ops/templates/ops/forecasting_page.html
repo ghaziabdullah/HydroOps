@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI & Forecasting | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+
+{% block content %}
+<script type="application/json" id="forecastChartData">{{ forecast_chart_json|safe }}</script>
+
+<section class="af-select-grid">
+    <article class="af-card af-select-card">
+        <p class="af-label">Campus / Hostel / Unit</p>
+        <div class="af-segmented" aria-label="Scope selector">
+            <button type="button" class="{% if scope_type == 'CAMPUS' %}active{% endif %}">Campus</button>
+            <span>/</span>
+            <button type="button" class="{% if scope_type == 'HOSTEL' %}active{% endif %}">Hostel</button>
+            <span>/</span>
+            <button type="button" class="{% if scope_type == 'UNIT' %}active{% endif %}">Unit</button>
+        </div>
+    </article>
+
+    <article class="af-card af-select-card">
+        <p class="af-label">Select a Hostel</p>
+        <div class="af-value-row">{{ selected_hostel_name|default:'Washroom A' }}</div>
+    </article>
+
+    <article class="af-card af-select-card">
+        <p class="af-label">Select a Unit</p>
+        <div class="af-value-row">{{ selected_unit_name|default:'Floor & washroom cluster' }}</div>
+    </article>
+
+    <article class="af-card af-select-card">
+        <p class="af-label">Forecast horizon</p>
+        <div class="af-segmented compact" aria-label="Horizon selector">
+            <button type="button" class="{% if horizon_hours == 6 %}active{% endif %}">6h</button>
+            <span>/</span>
+            <button type="button" class="{% if horizon_hours == 24 %}active{% endif %}">24h</button>
+            <span>/</span>
+            <button type="button" class="{% if horizon_hours == 168 %}active{% endif %}">7d</button>
+        </div>
+    </article>
+</section>
+
+<section class="af-main-grid">
+    <article class="af-card af-chart-card">
+        <div class="af-chart-head">
+            <h3>Forecast Water Usage for chosen asset</h3>
+            <div class="af-mini-range">
+                <button type="button" class="active">24h</button>
+                <button type="button">7d</button>
+                <button type="button">30d</button>
+            </div>
+        </div>
+        <div class="af-legend">
+            <span><i></i>Predicted</span>
+            <span class="muted">stranding</span>
+        </div>
+        <div class="af-chart-wrap">
+            <canvas id="forecastChart" height="130"></canvas>
+        </div>
+    </article>
+
+    <aside class="af-card af-model-card">
+        <h3>Glassmorphism model</h3>
+        <p><span>Model:</span> {% if run %}{{ run.method|title }}{% else %}Not trained{% endif %} (demo baseline)</p>
+        <p><span>Last trained:</span> {% if run %}{{ run.generated_at|date:'Y-m-d H:i' }}{% else %}-{% endif %}</p>
+        <p><span>Metric:</span> MAPE -</p>
+    </aside>
+</section>
+
+<section class="af-bottom-grid">
+    <article class="af-card af-table-card">
+        <h3>Top predicted spikes tomorrow</h3>
+        <table class="table table-sm af-table mb-0">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Predicted usage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in top_spikes %}
+                <tr>
+                    <td>{{ row.asset }}</td>
+                    <td>{{ row.predicted }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-secondary">No spike data.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <article class="af-card af-table-card">
+        <h3>Anomalies (rules now, AI later)</h3>
+        <table class="table table-sm af-table mb-0">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Events</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in anomalies %}
+                <tr>
+                    <td>{{ row.event }}</td>
+                    <td>{{ row.message }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-secondary">No anomalies flagged.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <article class="af-card af-table-card">
+        <h3>Recommendations</h3>
+        <table class="table table-sm af-table mb-0">
+            <thead>
+                <tr>
+                    <th>Insights</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in recommendations %}
+                <tr>
+                    <td>{{ row }}</td>
+                </tr>
+                {% empty %}
+                <tr><td class="text-secondary">No recommendations available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+</section>
+{% endblock %}
+
+{% block app_js %}<script src="{% static 'js/ops.js' %}"></script>{% endblock %}

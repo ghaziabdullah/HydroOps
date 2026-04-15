@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/accounts.css' %}">{% endblock %}
+
+{% block content %}
+<section class="ac-profile-grid">
+    <article class="app-card ac-hero-card">
+        <div class="ac-hero-top">
+            <div class="ac-avatar" data-avatar-initials>{{ request.user.username|slice:":1"|upper }}</div>
+            <div>
+                <p class="ac-kicker">HydroOps Account</p>
+                <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+                <p class="ac-subtitle">{{ profile.get_role_display|default:'Operator' }} • {{ request.user.email|default:'No email added' }}</p>
+            </div>
+            <span class="ac-status-pill {% if profile and profile.is_active_operator %}active{% else %}inactive{% endif %}">
+                {% if profile and profile.is_active_operator %}Active Operator{% else %}Inactive{% endif %}
+            </span>
+        </div>
+        <div class="ac-stat-row">
+            <div>
+                <p>Role</p>
+                <strong>{{ profile.get_role_display|default:'-' }}</strong>
+            </div>
+            <div>
+                <p>Phone</p>
+                <strong>{{ profile.phone|default:'Not set' }}</strong>
+            </div>
+            <div>
+                <p>Joined</p>
+                <strong>{{ request.user.date_joined|date:"M d, Y" }}</strong>
+            </div>
+            <div>
+                <p>Last Login</p>
+                <strong>{% if request.user.last_login %}{{ request.user.last_login|date:"M d, Y H:i" }}{% else %}Never{% endif %}</strong>
+            </div>
+        </div>
+    </article>
+
+    <article class="app-card ac-details-card">
+        <h3>Profile Details</h3>
+        <dl class="ac-detail-list">
+            <div><dt>Username</dt><dd>{{ request.user.username }}</dd></div>
+            <div><dt>Email</dt><dd>{{ request.user.email|default:'-' }}</dd></div>
+            <div><dt>Role</dt><dd>{{ profile.get_role_display|default:'-' }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ profile.phone|default:'-' }}</dd></div>
+            <div><dt>Operator Status</dt><dd>{% if profile and profile.is_active_operator %}Enabled{% else %}Disabled{% endif %}</dd></div>
+            <div><dt>Staff Access</dt><dd>{% if request.user.is_staff %}Yes{% else %}No{% endif %}</dd></div>
+        </dl>
+    </article>
+
+    <article class="app-card ac-security-card">
+        <h3>Security</h3>
+        <ul>
+            <li>Password last updated through Django auth.</li>
+            <li>Use a strong unique password for admin/operator roles.</li>
+            <li>Review account activity weekly.</li>
+        </ul>
+        <div class="ac-security-actions">
+            <a class="btn btn-outline-secondary btn-sm" href="/auth/password_change/">Change Password</a>
+            <a class="btn btn-outline-secondary btn-sm" href="/auth/logout/">Sign Out</a>
+        </div>
+    </article>
+
+    <article class="app-card ac-activity-card">
+        <h3>Recent Activity</h3>
+        <ol>
+            <li>
+                <p>Profile accessed</p>
+                <span>Now</span>
+            </li>
+            <li>
+                <p>Theme preference synced</p>
+                <span>This session</span>
+            </li>
+            <li>
+                <p>Last authentication event</p>
+                <span>{% if request.user.last_login %}{{ request.user.last_login|date:"M d, Y H:i" }}{% else %}No prior login{% endif %}</span>
+            </li>
+        </ol>
+    </article>
+</section>
+{% endblock %}
+
+{% block app_js %}<script src="{% static 'js/accounts.js' %}"></script>{% endblock %}

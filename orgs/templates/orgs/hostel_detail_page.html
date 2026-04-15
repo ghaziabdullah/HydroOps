@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hostel Detail | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/orgs.css' %}">{% endblock %}
+
+{% block content %}
+<script type="application/json" id="hostelDashboardData">{{ chart_data_json|safe }}</script>
+
+<section class="hd-page-head">
+    <p class="hd-breadcrumb">{{ hostel.campus_name }} <span>&#8250;</span> Hostels <span>&#8250;</span> {{ hostel.name }}</p>
+    <nav class="hd-tab-strip">
+        {% for tab_slug, tab_label in tabs %}
+        <a href="{% url 'orgs:hostel-detail-tab-page' hostel.id tab_slug %}" class="hd-tab {% if active_tab == tab_slug %}active{% endif %}">{{ tab_label }}</a>
+        {% endfor %}
+    </nav>
+</section>
+
+{% if active_tab == 'overview' %}
+<section class="hd-kpi-grid">
+    <article class="hd-kpi-card">
+        <p>Today Usage (L)</p>
+        <h3>{{ today_usage_l|floatformat:0 }} L</h3>
+    </article>
+    <article class="hd-kpi-card">
+        <p>Current Flow (L)</p>
+        <h3>{{ current_flow_l_min|floatformat:0 }} <span>/min</span></h3>
+    </article>
+    <article class="hd-kpi-card">
+        <p>Pressure Health</p>
+        <h3 class="{{ pressure_health_color }}">{{ pressure_health }}</h3>
+        <small>{{ pressure_now|floatformat:1 }} bar</small>
+    </article>
+    <article class="hd-kpi-card">
+        <p>Night Flow Indicator</p>
+        <h3 class="{{ night_indicator_color }}">{{ night_indicator }}</h3>
+    </article>
+    <article class="hd-kpi-card">
+        <p>Tank Refill Risk</p>
+        <h3 class="{{ tank_risk_color }}">{{ tank_risk }}</h3>
+    </article>
+    <article class="hd-kpi-card">
+        <p>Quality Status</p>
+        <h3 class="{{ quality_color }}">{{ quality_status }}</h3>
+    </article>
+</section>
+
+<section class="hd-main-grid">
+    <div class="hd-left-stack">
+        <article class="hd-card">
+            <div class="hd-card-head">
+                <h3>Usage Trend (24h)</h3>
+            </div>
+            <canvas id="hostelUsageChart" height="125"></canvas>
+        </article>
+        <article class="hd-card">
+            <div class="hd-card-head">
+                <h3>Pressure Trend (24h)</h3>
+            </div>
+            <canvas id="hostelPressureChart" height="125"></canvas>
+        </article>
+    </div>
+
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Units Leaderboard</h3></div>
+        <div class="hd-table-wrap">
+            <table class="table table-sm hd-table">
+                <thead>
+                    <tr><th>Unit</th><th>Current Usage (L)</th><th>Predicted Next 24h (L)</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in units_leaderboard %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'orgs:unit-detail-page' row.unit.id %}" class="hd-link">{{ row.unit.name }}</a>
+                            <small>{{ row.label }} {{ row.sub }}</small>
+                        </td>
+                        <td>{{ row.current|floatformat:0 }}</td>
+                        <td>{{ row.predicted|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3">No unit usage data yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>AI Recommendations</h3></div>
+        <span class="hd-badge">AI-ready (alpha)</span>
+        <ul class="hd-list">
+            {% for tip in recommendations %}
+            <li>{{ tip }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+{% elif active_tab == 'usage' %}
+<section class="hd-sub-grid">
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Usage Trend (24h)</h3></div>
+        <canvas id="hostelUsageChart" height="130"></canvas>
+    </article>
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Usage Summary</h3></div>
+        <div class="hd-metric-list">
+            <p><span>Today Usage</span><strong>{{ today_usage_l|floatformat:0 }} L</strong></p>
+            <p><span>Current Flow</span><strong>{{ current_flow_l_min|floatformat:1 }} L/min</strong></p>
+            <p><span>Night Indicator</span><strong class="{{ night_indicator_color }}">{{ night_indicator }}</strong></p>
+        </div>
+    </article>
+</section>
+{% elif active_tab == 'units' %}
+<section class="hd-sub-grid one">
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Units Consumption Leaderboard</h3></div>
+        <div class="hd-table-wrap">
+            <table class="table table-sm hd-table">
+                <thead><tr><th>Unit</th><th>Type</th><th>Current (L)</th><th>Predicted (L)</th></tr></thead>
+                <tbody>
+                    {% for row in units_leaderboard %}
+                    <tr>
+                        <td><a href="{% url 'orgs:unit-detail-page' row.unit.id %}" class="hd-link">{{ row.unit.name }}</a></td>
+                        <td>{{ row.label }}</td>
+                        <td>{{ row.current|floatformat:0 }}</td>
+                        <td>{{ row.predicted|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4">No units available.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% elif active_tab == 'tanks' %}
+<section class="hd-sub-grid one">
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Tank Health</h3></div>
+        <div class="hd-table-wrap">
+            <table class="table table-sm hd-table">
+                <thead><tr><th>Tank</th><th>Current Level (%)</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for tank in tanks %}
+                    <tr>
+                        <td>{{ tank.asset.name }}</td>
+                        <td>{{ tank.level|floatformat:1 }}</td>
+                        <td><span class="hd-pill {{ tank.status|lower }}">{{ tank.status }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3">No tank telemetry found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% elif active_tab == 'pressure' %}
+<section class="hd-sub-grid">
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Pressure Trend (24h)</h3></div>
+        <canvas id="hostelPressureChart" height="130"></canvas>
+    </article>
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Sensor Snapshot</h3></div>
+        <div class="hd-table-wrap">
+            <table class="table table-sm hd-table">
+                <thead><tr><th>Sensor</th><th>Location</th><th>Pressure (bar)</th></tr></thead>
+                <tbody>
+                    {% for row in pressure_rows %}
+                    <tr>
+                        <td>{{ row.sensor.name }}</td>
+                        <td>{{ row.sensor.device.asset.name }}</td>
+                        <td>{{ row.value|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3">No pressure sensors available.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% elif active_tab == 'quality' %}
+<section class="hd-sub-grid one">
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Water Quality Snapshot</h3></div>
+        <div class="hd-table-wrap">
+            <table class="table table-sm hd-table">
+                <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for row in quality_rows %}
+                    <tr>
+                        <td>{{ row.label }}</td>
+                        <td>{{ row.value }}</td>
+                        <td><span class="hd-pill {{ row.status|lower }}">{{ row.status }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3">No quality data available.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% elif active_tab == 'alerts' %}
+<section class="hd-sub-grid one">
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Recent Alerts</h3></div>
+        <ul class="hd-alert-list">
+            {% for alert in alerts %}
+            <li>
+                <div>
+                    <strong>{{ alert.get_alert_type_display }}</strong>
+                    <p>{{ alert.message }}</p>
+                </div>
+                <span class="hd-pill {{ alert.severity|lower }}">{{ alert.get_severity_display }}</span>
+            </li>
+            {% empty %}
+            <li><div><strong>No alerts</strong><p>Everything looks stable.</p></div></li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+{% elif active_tab == 'forecast' %}
+<section class="hd-sub-grid">
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Demand Forecast (Next 24h)</h3></div>
+        <canvas id="hostelForecastChart" height="130"></canvas>
+    </article>
+    <article class="hd-card">
+        <div class="hd-card-head"><h3>Forecast Notes</h3></div>
+        <ul class="hd-list">
+            <li>Use night baseline to detect unusual leakage behavior.</li>
+            <li>Prioritize units with highest predicted demand first.</li>
+            <li>Cross-check forecast spikes with pressure dips and tank levels.</li>
+        </ul>
+    </article>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block app_js %}<script src="{% static 'js/orgs.js' %}"></script>{% endblock %}

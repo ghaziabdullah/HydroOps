@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hostels | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+
+{% block content %}
+<section class="hs-summary-grid mb-3">
+    <article class="app-card hs-summary-card">
+        <p>Active Hostels</p>
+        <h3>{{ summary.hostels }}</h3>
+    </article>
+    <article class="app-card hs-summary-card">
+        <p>Average Tank Level</p>
+        <h3>{{ summary.avg_tank|floatformat:1 }}%</h3>
+    </article>
+    <article class="app-card hs-summary-card">
+        <p>Open Alerts</p>
+        <h3>{{ summary.open_alerts }}</h3>
+    </article>
+    <article class="app-card hs-summary-card">
+        <p>Critical Alerts</p>
+        <h3 class="danger">{{ summary.critical_alerts }}</h3>
+    </article>
+</section>
+
+<div class="app-card p-3 hs-table-wrap">
+    <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
+        <h3 class="h6 mb-0">Main Campus Hostels List / Comparison</h3>
+        <div class="d-flex gap-2 flex-wrap hs-badges">
+            <span class="badge">High Night Flow</span>
+            <span class="badge">Quality Warnings</span>
+            <span class="badge">Predicted Spike</span>
+            <span class="badge danger">Critical Alerts</span>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle hs-table" id="hostelsComparisonTable">
+            <thead>
+                <tr>
+                    <th>
+                        <button type="button" class="hs-sort-btn" data-sort-key="hostel" data-sort-type="text" aria-label="Sort by hostel">
+                            Hostel <span class="hs-sort-indicator"></span>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="hs-sort-btn" data-sort-key="usage" data-sort-type="number" aria-label="Sort by today usage">
+                            Today Usage (L) <span class="hs-sort-indicator"></span>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="hs-sort-btn" data-sort-key="forecast" data-sort-type="number" aria-label="Sort by forecast">
+                            Predicted Next 24h (L) <span class="hs-sort-indicator"></span>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="hs-sort-btn" data-sort-key="tank" data-sort-type="number" aria-label="Sort by tank level">
+                            Tank Level (%) <span class="hs-sort-indicator"></span>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="hs-sort-btn" data-sort-key="alerts" data-sort-type="number" aria-label="Sort by alerts">
+                            Alerts <span class="hs-sort-indicator"></span>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="hs-sort-btn" data-sort-key="critical" data-sort-type="number" aria-label="Sort by critical alerts">
+                            Critical <span class="hs-sort-indicator"></span>
+                        </button>
+                    </th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr
+                    data-hostel="{{ row.hostel_name|lower }}"
+                    data-usage="{{ row.today_usage|floatformat:3 }}"
+                    data-forecast="{{ row.predicted_next_24h|floatformat:3 }}"
+                    data-tank="{{ row.tank_level_percentage|floatformat:3 }}"
+                    data-alerts="{{ row.alerts }}"
+                    data-critical="{{ row.critical_alerts }}"
+                >
+                    <td>
+                        <div class="hs-hostel-cell">
+                            <a class="hs-hostel-link" href="{% url 'orgs:hostel-detail-page' row.hostel_id %}">{{ row.hostel_name|upper }}</a>
+                        </div>
+                    </td>
+                    <td class="hs-value">{{ row.today_usage|floatformat:0 }}</td>
+                    <td class="hs-value">{{ row.predicted_next_24h|floatformat:0 }}</td>
+                    <td>
+                        <div class="hs-tank-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ row.tank_level_percentage|floatformat:0 }}">
+                            <span data-fill-width="{% if row.tank_level_percentage > 100 %}100{% elif row.tank_level_percentage < 0 %}0{% else %}{{ row.tank_level_percentage|floatformat:0 }}{% endif %}"></span>
+                        </div>
+                        <small class="hs-tank-label">{{ row.tank_level_percentage|floatformat:1 }}%</small>
+                    </td>
+                    <td>
+                        {% if row.alerts > 0 %}
+                        <button class="btn btn-sm hs-alert-btn" type="button" data-bs-toggle="modal" data-bs-target="#hostelAlertsModal{{ row.hostel_id }}">
+                            {{ row.alerts }}
+                        </button>
+                        {% else %}
+                        <span class="badge hs-badge-ok">No active alerts</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.critical_alerts > 0 %}
+                        <button class="btn btn-sm hs-alert-btn hs-alert-btn-critical" type="button" data-bs-toggle="modal" data-bs-target="#hostelAlertsModal{{ row.hostel_id }}">
+                            {{ row.critical_alerts }}
+                        </button>
+                        {% else %}
+                        <span class="badge hs-badge-critical-zero">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'orgs:hostel-detail-page' row.hostel_id %}">View Details</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-secondary">No hostel data found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% for row in rows %}
+<div class="modal fade" id="hostelAlertsModal{{ row.hostel_id }}" tabindex="-1" aria-labelledby="hostelAlertsModalLabel{{ row.hostel_id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="hostelAlertsModalLabel{{ row.hostel_id }}">{{ row.hostel_name|upper }} • ACTIVE ALERT DETAILS</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if row.alert_details %}
+                <ul class="hs-alert-list">
+                    {% for alert in row.alert_details %}
+                    <li>
+                        <div>
+                            <h6>{{ alert.alert_type }}</h6>
+                            <p>{{ alert.message }}</p>
+                            <small>Started: {{ alert.started_at|date:"M d, Y H:i" }}</small>
+                        </div>
+                        <span class="badge {% if alert.severity == 'Critical' %}text-bg-danger{% elif alert.severity == 'Warn' %}text-bg-warning{% else %}text-bg-info{% endif %}">{{ alert.severity }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0 text-secondary">No active alerts for this hostel.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block app_js %}<script src="{% static 'js/dashboard.js' %}"></script>{% endblock %}

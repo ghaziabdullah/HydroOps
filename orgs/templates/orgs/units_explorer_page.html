@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Units Explorer | HydroOps{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% static 'css/orgs.css' %}">{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="h5 mb-0">{{ active_hostel.name|default:'Units Explorer' }}</h3>
+    <form method="get" class="d-flex gap-2">
+        <label class="visually-hidden" for="hostelSelect">Select hostel</label>
+        <select class="form-select form-select-sm" id="hostelSelect" name="hostel_id" onchange="this.form.submit()">
+            {% for hostel in hostels %}
+            <option value="{{ hostel.id }}" {% if active_hostel and hostel.id == active_hostel.id %}selected{% endif %}>{{ hostel.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    {% for unit in units %}
+    <a href="{% url 'orgs:unit-detail-page' unit.id %}" class="unit-card app-card p-3 text-decoration-none">
+        <h4 class="h6 text-dark mb-3">{{ unit.name }}</h4>
+        <p class="mb-1 small text-secondary">Type: {{ unit.get_unit_type_display }}</p>
+        <p class="mb-0 small"><span class="badge text-bg-success">Low Risk</span></p>
+    </a>
+    {% empty %}
+    <div class="app-card p-3 text-secondary">No units available.</div>
+    {% endfor %}
+</section>
+{% endblock %}

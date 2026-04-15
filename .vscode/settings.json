@@ -1,0 +1,14 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "chat.tools.terminal.autoApprove": {
+        "/^cd \"d:\\\\Data\\\\Study\\\\FYP\\\\Django app\\\\HydroOps\" ; python manage\\.py check$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd \"d:\\\\Data\\\\Study\\\\FYP\\\\Django app\\\\HydroOps\"; python manage\\.py check$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
