@@ -1796,7 +1796,7 @@ html[data-theme="light"] .af-action-list strong {
 
 .st-sections {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 12px;
     align-items: start;
 }
@@ -1836,9 +1836,9 @@ html[data-theme="light"] .af-action-list strong {
 }
 
 .st-rule-grid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 300px));
-    justify-content: start;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
 }
 
 .st-rule-card {
@@ -1883,16 +1883,9 @@ html[data-theme="light"] .af-action-list strong {
     justify-content: flex-end;
 }
 
-@media (max-width: 1280px) {
-    .st-sections {
-        grid-template-columns: 1fr;
-    }
-}
-
 @media (max-width: 1180px) {
     .st-rule-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        justify-content: initial;
     }
 }
 

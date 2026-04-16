@@ -28,6 +28,7 @@
 		const isHidden = input.getAttribute("type") === "password";
 		input.setAttribute("type", isHidden ? "text" : "password");
 		toggle.textContent = isHidden ? "Hide" : "Show";
+		toggle.setAttribute("aria-pressed", isHidden ? "true" : "false");
 	});
 })();
 
@@ -67,7 +68,7 @@
 		return;
 	}
 
-	const words = ["Monitoring", "Optimization", "Forecasting", "Sustainability"];
+	const words = ["Intelligence", "Optimization", "Forecasting", "Sustainability"];
 	let idx = 0;
 
 	setInterval(() => {

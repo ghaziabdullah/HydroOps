@@ -40,61 +40,70 @@
             </div>
 
             <button type="button" class="ac-landing-theme" id="landingThemeToggle">
-                <span class="ac-theme-dot">&#9788;</span>
+                <span class="ac-theme-dot">☀</span>
                 <span data-theme-label>Light</span>
             </button>
         </header>
 
         <div class="ac-landing-grid">
             <article class="ac-landing-copy app-card">
-                <span class="ac-auth-chip">FYP Project Deployment</span>
-                <h1>Campus Water Intelligence for <span id="landingWord">Monitoring</span></h1>
+                <span class="ac-auth-chip">Campus operations intelligence</span>
+                <h1>Optimizing Campus Water Through <span id="landingWord">Intelligence</span></h1>
                 <p>
-                    HydroOps unifies sensor telemetry, quality checks, alerts, and forecasting into one live command layer for campus hostels.
-                    Built for actionable operations instead of static reports.
+                    HydroOps unifies sensors, analytics, and forecasting into one operational layer for campus water management.
+                    Move from reactive checks to coordinated action.
                 </p>
 
-                <div class="ac-logo-row">
-                    <div class="ac-logo-card">
-                        <img src="{% vstatic 'media/scee-logo.png' %}" alt="SCEE logo">
-                    </div>
-                    <div class="ac-logo-card">
-                        <img src="{% vstatic 'images/nust-logo-placeholder.svg' %}" alt="NUST logo">
-                    </div>
+                <div class="ac-value-grid" aria-label="Platform capabilities">
+                    <article class="ac-value-card">
+                        <span class="ac-value-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h4l2-5 4 10 2-5h4"></path></svg>
+                        </span>
+                        <div>
+                            <h3>IoT Integration</h3>
+                            <p>Live telemetry from flow, tank, pressure, and quality sensors.</p>
+                        </div>
+                    </article>
+                    <article class="ac-value-card">
+                        <span class="ac-value-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M7 15l3-3 3 1 4-5"></path></svg>
+                        </span>
+                        <div>
+                            <h3>Real-time Analytics</h3>
+                            <p>Fast status views, alerts, and trend summaries for operators.</p>
+                        </div>
+                    </article>
+                    <article class="ac-value-card">
+                        <span class="ac-value-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14"></path><path d="M7 5v4"></path><path d="M17 5v4"></path><path d="M6 19h12"></path><path d="M8 19V11h8v8"></path></svg>
+                        </span>
+                        <div>
+                            <h3>AI Forecasting</h3>
+                            <p>Baseline demand outlook and early warning for operational planning.</p>
+                        </div>
+                    </article>
                 </div>
 
-                <div class="ac-metric-row">
-                    <article>
-                        <p data-counter="24">0</p>
-                        <span>Monitored Hostels</span>
-                    </article>
-                    <article>
-                        <p data-counter="310">0</p>
-                        <span>Connected Sensors</span>
-                    </article>
-                    <article>
-                        <p data-counter="98">0</p>
-                        <span>Forecast Accuracy %</span>
-                    </article>
-                </div>
-
-                <div class="ac-mini-viz" aria-hidden="true">
-                    <svg viewBox="0 0 520 130" preserveAspectRatio="none">
-                        <defs>
-                            <linearGradient id="lineA" x1="0" x2="1">
-                                <stop offset="0%" stop-color="#36efe2"/>
-                                <stop offset="100%" stop-color="#86a4ff"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M0,88 C42,72 66,98 104,86 C138,76 170,38 202,48 C240,62 274,100 308,84 C344,66 366,18 410,28 C452,39 486,76 520,64" class="ac-viz-line"/>
-                    </svg>
+                <div class="ac-partners-card">
+                    <div class="ac-partners-head">
+                        <span>Developed at</span>
+                        <small>Institutional collaboration</small>
+                    </div>
+                    <div class="ac-logo-row">
+                        <div class="ac-logo-card">
+                            <img src="{% vstatic 'media/scee-logo.png' %}" alt="SCEE logo">
+                        </div>
+                        <div class="ac-logo-card">
+                            <img src="{% vstatic 'media/nust_logo.png' %}" alt="NUST logo">
+                        </div>
+                    </div>
                 </div>
             </article>
 
             <article class="ac-auth-panel app-card">
                 <div class="ac-auth-head">
-                    <h2>Sign In</h2>
-                    <p>Access dashboards, hostel intelligence, and operations center</p>
+                    <h2>Sign in</h2>
+                    <p>Access dashboards, hostel intelligence, and the operations center.</p>
                 </div>
 
                 {% if form.non_field_errors %}
@@ -106,7 +115,7 @@
                 <form method="post" novalidate>
                     {% csrf_token %}
 
-                    <div class="mb-3">
+                    <div class="mb-3 ac-auth-field">
                         <label class="form-label" for="id_username">Username</label>
                         {{ form.username|add_class:"form-control form-control-lg"|attr:"autocomplete:username" }}
                         {% if form.username.errors %}
@@ -114,11 +123,11 @@
                         {% endif %}
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 ac-auth-field">
                         <label class="form-label" for="id_password">Password</label>
                         <div class="input-group input-group-lg">
                             {{ form.password|add_class:"form-control"|attr:"autocomplete:current-password" }}
-                            <button class="btn btn-outline-secondary" type="button" id="toggleLoginPassword">Show</button>
+                            <button class="btn btn-outline-secondary ac-password-toggle" type="button" id="toggleLoginPassword" aria-pressed="false">Show</button>
                         </div>
                         {% if form.password.errors %}
                         <div class="invalid-feedback d-block">{% for error in form.password.errors %}{{ error }}{% endfor %}</div>
@@ -132,20 +141,9 @@
             </article>
         </div>
 
-        <section class="ac-feature-grid" aria-label="Platform highlights">
-            <article class="app-card">
-                <h3>Real-time Monitoring</h3>
-                <p>Track inlet, tank, and unit-level flow/pressure with fast anomaly surfacing.</p>
-            </article>
-            <article class="app-card">
-                <h3>Quality Intelligence</h3>
-                <p>pH, turbidity, and TDS status with compliance snapshots and trends.</p>
-            </article>
-            <article class="app-card">
-                <h3>Predictive Planning</h3>
-                <p>Forecast next-day demand and prioritize maintenance with AI-ready insights.</p>
-            </article>
-        </section>
+        <footer class="ac-landing-footer app-card">
+            <p>Copyright © School of Civil and Environmental Engineering (SCEE), NUST.</p>
+        </footer>
     </section>
 </main>
 
