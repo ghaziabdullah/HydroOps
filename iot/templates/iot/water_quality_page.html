@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Water Quality | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/iot.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/iot.css' %}">{% endblock %}
 
 {% block content %}
 <script type="application/json" id="qualityChartData">
@@ -105,4 +105,4 @@
 </section>
 {% endblock %}
 
-{% block app_js %}<script src="{% static 'js/iot.js' %}"></script>{% endblock %}
+{% block app_js %}<script src="{% vstatic 'js/iot.js' %}"></script>{% endblock %}

@@ -1,17 +1,16 @@
 {% load static %}
 <div class="common-topbar-left">
+    <button id="mobileSidebarToggle" class="common-mobile-menu-btn" type="button" aria-label="Open navigation" aria-controls="appSidebar" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
     <div class="common-logo-wrap" aria-label="SCEE logo">
-        <img src="{% static 'media/scee-logo.png' %}" alt="SCEE logo">
+        <img src="{% vstatic 'media/scee-logo.png' %}" alt="SCEE logo">
     </div>
 </div>
 
 <div class="common-topbar-right">
-    <div class="common-range-group" role="group" aria-label="Time range">
-        <button class="common-range-btn active" type="button" data-range="24h">24h</button>
-        <button class="common-range-btn" type="button" data-range="7d">7d</button>
-        <button class="common-range-btn" type="button" data-range="30d">30d</button>
-    </div>
-
     <div class="common-search-wrap">
         <input id="globalSearch" class="common-search" type="search" placeholder="Search hostel, unit, sensor">
     </div>

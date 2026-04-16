@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Profile | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/accounts.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/accounts.css' %}">{% endblock %}
 
 {% block content %}
 <section class="ac-profile-grid">
@@ -83,4 +83,4 @@
 </section>
 {% endblock %}
 
-{% block app_js %}<script src="{% static 'js/accounts.js' %}"></script>{% endblock %}
+{% block app_js %}<script src="{% vstatic 'js/accounts.js' %}"></script>{% endblock %}

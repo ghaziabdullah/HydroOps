@@ -73,6 +73,10 @@ body {
     flex-direction: column;
     padding: 1rem;
     gap: 1rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .sidebar-brand {
@@ -671,4 +675,100 @@ html[data-theme="dark"] .app-content small {
 
 .app-sidebar.collapsed .nav-link-item.active::before {
     left: 0.15rem;
+}
+
+.app-sidebar-backdrop {
+    display: none;
+}
+
+.common-mobile-menu-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--surface) 92%, white 8%),
+        color-mix(in srgb, var(--surface-2) 95%, var(--primary) 5%)
+    );
+    color: var(--text);
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.common-mobile-menu-btn span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 75%, var(--text-muted) 25%);
+}
+
+@media (max-width: 992px) {
+    .common-mobile-menu-btn {
+        display: inline-flex;
+        flex: 0 0 auto;
+    }
+
+    .sidebar-toggle-btn {
+        display: none;
+    }
+
+    .app-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(86vw, 320px);
+        z-index: 1200;
+        transform: translateX(-105%);
+        transition: transform 0.22s ease;
+        padding: 0.9rem;
+    }
+
+    .app-shell.mobile-sidebar-open .app-sidebar {
+        transform: translateX(0);
+    }
+
+    .app-main {
+        width: 100%;
+    }
+
+    .brand-title,
+    .brand-subtitle,
+    .nav-link-text {
+        font-size: inherit;
+    }
+
+    .nav-link-item {
+        justify-content: flex-start;
+        padding-inline: 0.72rem;
+    }
+
+    .nav-link-item.active::before {
+        left: -0.24rem;
+    }
+
+    .app-sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        background: rgba(6, 12, 20, 0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 1100;
+    }
+
+    .app-shell.mobile-sidebar-open .app-sidebar-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }

@@ -1,6 +1,7 @@
 (function initForecastChart() {
     const canvas = document.getElementById("forecastChart");
     const dataNode = document.getElementById("forecastChartData");
+    const controlsForm = document.getElementById("forecastControlsForm");
     if (!canvas || !dataNode || typeof Chart === "undefined") {
         return;
     }
@@ -12,10 +13,10 @@
     function palette() {
         const dark = document.documentElement.getAttribute("data-theme") === "dark";
         return {
-            line: "#32ece7",
-            tick: dark ? "#a4bada" : "#5a7395",
-            grid: dark ? "rgba(122, 150, 199, 0.23)" : "rgba(122, 150, 199, 0.18)",
-            areaTop: dark ? "rgba(50, 236, 231, 0.46)" : "rgba(50, 236, 231, 0.28)",
+            line: dark ? "#48f0eb" : "#158f9c",
+            tick: dark ? "#b6cbe0" : "#46698d",
+            grid: dark ? "rgba(122, 150, 199, 0.26)" : "rgba(122, 150, 199, 0.22)",
+            areaTop: dark ? "rgba(72, 240, 235, 0.42)" : "rgba(21, 143, 156, 0.22)",
             areaBottom: "rgba(50, 236, 231, 0.02)",
         };
     }
@@ -56,7 +57,7 @@
                     legend: {display: false},
                     tooltip: {
                         enabled: true,
-                        backgroundColor: "rgba(8, 18, 38, 0.92)",
+                        backgroundColor: "rgba(8, 18, 38, 0.95)",
                     },
                 },
                 scales: {
@@ -73,7 +74,7 @@
                         ticks: {
                             color: p.tick,
                             callback(value) {
-                                return value === 0 ? "0" : `${value}k`;
+                                return value === 0 ? "0" : `${value}`;
                             },
                         },
                     },
@@ -83,6 +84,64 @@
     }
 
     render();
+
+    function submitControls() {
+        if (!controlsForm) {
+            return;
+        }
+        if (typeof controlsForm.requestSubmit === "function") {
+            controlsForm.requestSubmit();
+        } else {
+            controlsForm.submit();
+        }
+    }
+
+    const scopeSelect = document.getElementById("forecastScopeSelect");
+    const hostelSelect = document.getElementById("forecastHostelSelect");
+    const unitSelect = document.getElementById("forecastUnitSelect");
+    const horizonSelect = document.getElementById("forecastHorizonSelect");
+
+    function syncSelectors() {
+        if (!scopeSelect || !hostelSelect || !unitSelect) {
+            return;
+        }
+
+        const scope = scopeSelect.value;
+        const scopeCampus = scope === "CAMPUS";
+        const scopeHostel = scope === "HOSTEL";
+        const scopeUnit = scope === "UNIT";
+
+        hostelSelect.disabled = scopeCampus;
+        unitSelect.disabled = scopeCampus || scopeHostel;
+
+        if (scopeCampus) {
+            hostelSelect.value = "";
+            unitSelect.value = "";
+        } else if (scopeHostel) {
+            unitSelect.value = "";
+        }
+    }
+
+    [scopeSelect, hostelSelect, unitSelect, horizonSelect].forEach((control) => {
+        if (!control) {
+            return;
+        }
+        control.addEventListener("change", () => {
+            if (control === scopeSelect) {
+                syncSelectors();
+            }
+            if (control === hostelSelect && scopeSelect && hostelSelect.value) {
+                scopeSelect.value = "HOSTEL";
+            }
+            if (control === unitSelect && scopeSelect && unitSelect.value) {
+                scopeSelect.value = "UNIT";
+            }
+            syncSelectors();
+            submitControls();
+        });
+    });
+
+    syncSelectors();
 
     const toggle = document.getElementById("themeToggle");
     if (toggle) {

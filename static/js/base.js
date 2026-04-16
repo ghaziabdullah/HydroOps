@@ -39,13 +39,71 @@ function getCookie(name) {
 })();
 
 (function initSidebarToggle() {
+    const shell = document.querySelector(".app-shell");
     const sidebar = document.querySelector(".app-sidebar");
-    const button = document.getElementById("sidebarToggle");
-    if (!sidebar || !button) {
+    const desktopToggle = document.getElementById("sidebarToggle");
+    const mobileToggle = document.getElementById("mobileSidebarToggle");
+    const backdrop = document.getElementById("sidebarBackdrop");
+    if (!shell || !sidebar) {
         return;
     }
-    button.addEventListener("click", () => {
-        sidebar.classList.toggle("collapsed");
+
+    function isMobileViewport() {
+        return window.matchMedia("(max-width: 992px)").matches;
+    }
+
+    function openMobileSidebar() {
+        shell.classList.add("mobile-sidebar-open");
+        if (mobileToggle) {
+            mobileToggle.setAttribute("aria-expanded", "true");
+        }
+    }
+
+    function closeMobileSidebar() {
+        shell.classList.remove("mobile-sidebar-open");
+        if (mobileToggle) {
+            mobileToggle.setAttribute("aria-expanded", "false");
+        }
+    }
+
+    if (desktopToggle) {
+        desktopToggle.addEventListener("click", () => {
+            if (isMobileViewport()) {
+                openMobileSidebar();
+                return;
+            }
+            sidebar.classList.toggle("collapsed");
+        });
+    }
+
+    if (mobileToggle) {
+        mobileToggle.addEventListener("click", () => {
+            if (shell.classList.contains("mobile-sidebar-open")) {
+                closeMobileSidebar();
+            } else {
+                openMobileSidebar();
+            }
+        });
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener("click", () => {
+            closeMobileSidebar();
+        });
+    }
+
+    sidebar.querySelectorAll(".nav-link-item").forEach((link) => {
+        link.addEventListener("click", () => {
+            if (isMobileViewport()) {
+                closeMobileSidebar();
+            }
+        });
+    });
+
+    window.addEventListener("resize", () => {
+        if (!isMobileViewport()) {
+            closeMobileSidebar();
+        }
     });
 })();
 

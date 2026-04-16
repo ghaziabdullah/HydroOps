@@ -2,30 +2,122 @@
 {% load static %}
 
 {% block title %}Units Explorer | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/orgs.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/orgs.css' %}">{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h3 class="h5 mb-0">{{ active_hostel.name|default:'Units Explorer' }}</h3>
-    <form method="get" class="d-flex gap-2">
-        <label class="visually-hidden" for="hostelSelect">Select hostel</label>
-        <select class="form-select form-select-sm" id="hostelSelect" name="hostel_id" onchange="this.form.submit()">
-            {% for hostel in hostels %}
-            <option value="{{ hostel.id }}" {% if active_hostel and hostel.id == active_hostel.id %}selected{% endif %}>{{ hostel.name }}</option>
-            {% endfor %}
-        </select>
-    </form>
+<div class="ux-breadcrumb">
+    <a href="{% url 'dashboard:hostels-page' %}">Hostels</a>
+    <span>&rsaquo;</span>
+    {% if active_hostel %}
+    <a href="{% url 'orgs:hostel-detail-page' active_hostel.id %}">{{ active_hostel.name }}</a>
+    {% else %}
+    <span>Hostel</span>
+    {% endif %}
+    <span>&rsaquo;</span>
+    <span>Units</span>
 </div>
 
-<section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-    {% for unit in units %}
-    <a href="{% url 'orgs:unit-detail-page' unit.id %}" class="unit-card app-card p-3 text-decoration-none">
-        <h4 class="h6 text-dark mb-3">{{ unit.name }}</h4>
-        <p class="mb-1 small text-secondary">Type: {{ unit.get_unit_type_display }}</p>
-        <p class="mb-0 small"><span class="badge text-bg-success">Low Risk</span></p>
-    </a>
+<section class="ux-header-card">
+    <div class="ux-hostel-main">
+        <span class="ux-hostel-logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 21h18v-2H3v2Zm2-4h3V3H5v14Zm5 0h4V7h-4v10Zm6 0h3V10h-3v7Z"/></svg>
+        </span>
+        <div>
+            <h2>{{ active_hostel.name|default:'Units Explorer' }}</h2>
+            <p>Main campus unit grouping and AI monitoring view</p>
+        </div>
+    </div>
+
+    <div class="ux-hostel-summary">
+        <span><strong>{{ hostel_units_summary.total_floors|default:0 }}</strong> Floors <small>{{ hostel_units_summary.total_floors_desc }}</small></span>
+        <span><strong>{{ hostel_units_summary.total_clusters|default:0 }}</strong> Clusters <small>{{ hostel_units_summary.total_clusters_desc }}</small></span>
+        <span><strong>{{ hostel_units_summary.active_alerts|default:0 }}</strong> Active Alerts <small>{{ hostel_units_summary.active_alerts_desc }}</small></span>
+    </div>
+
+    <div class="ux-header-controls">
+        <form method="get" class="ux-hostel-picker">
+            <label class="visually-hidden" for="hostelSelect">Select hostel</label>
+            <select class="form-select form-select-sm" id="hostelSelect" name="hostel_id" onchange="this.form.submit()">
+                {% for hostel in hostels %}
+                <option value="{{ hostel.id }}" {% if active_hostel and hostel.id == active_hostel.id %}selected{% endif %}>{{ hostel.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <div class="ux-view-toggle" id="unitsViewToggle" role="group" aria-label="Layout toggle">
+            <button type="button" class="ux-view-btn active" data-view="grid">Grid View</button>
+            <button type="button" class="ux-view-btn" data-view="diagram">Diagram View</button>
+        </div>
+    </div>
+</section>
+
+<section class="ux-floors-wrap" id="unitsExplorerRoot" data-view="grid">
+    {% for floor in floor_cards %}
+    <article class="ux-floor-card {{ floor.status_color }}">
+        <header class="ux-floor-head">
+            <div>
+                <h3>Floor {{ floor.floor_number }}</h3>
+                <p>{{ floor.title }}</p>
+            </div>
+            <span class="ux-floor-status {{ floor.status_color }}">{{ floor.status }}</span>
+        </header>
+
+        <div class="ux-floor-summary">
+            <span><strong>{{ floor.average_flow_l_hr|floatformat:1 }}</strong> Avg Flow (L/hr)</span>
+            <span><strong>{{ floor.alerts }}</strong> Alerts</span>
+        </div>
+
+        <div class="ux-clusters-grid">
+            {% for cluster in floor.clusters %}
+            <a href="{% url 'orgs:unit-detail-page' cluster.unit.id %}" class="ux-cluster-card {{ cluster.risk_color }}">
+                <div class="ux-cluster-head">
+                    <h4>
+                        <span class="ux-cluster-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h11a3 3 0 0 1 0 6H9v2h2a2 2 0 0 1 2 2v2h-2v-2H5v2H3v-2a2 2 0 0 1 2-2h2v-2H4V6Zm12 2H6v2h10a1 1 0 0 0 0-2Zm3 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg>
+                        </span>
+                        Cluster {{ cluster.suffix }}
+                    </h4>
+                    <span class="ux-cluster-alerts {% if cluster.alerts > 0 %}has-alerts{% endif %}">{{ cluster.alerts }}</span>
+                </div>
+
+                <div class="ux-cluster-metrics">
+                    <p class="ux-cluster-flow"><strong>{{ cluster.flow_rate|floatformat:1 }}</strong><span>L/hr now</span></p>
+                    <p class="ux-cluster-flow"><strong>{{ cluster.usage_24h|floatformat:0 }}</strong><span>L in 24h</span></p>
+                    <p class="ux-cluster-flow"><strong>{{ cluster.night_flow|floatformat:1 }}</strong><span>L/hr night</span></p>
+                    <p class="ux-cluster-flow"><strong>{{ cluster.temperature_c|floatformat:1 }}&deg;C</strong><span>Water temperature</span></p>
+                </div>
+
+                    <p class="ux-cluster-updated">{{ cluster.last_updated }}</p>
+
+                <div class="ux-cluster-trend">
+                    <div class="ux-trend-head">
+                        <span>24h Flow Trend</span>
+                        <span class="ux-trend-chip {% if cluster.trend_delta_pct > 8 %}up{% elif cluster.trend_delta_pct < -8 %}down{% else %}steady{% endif %}">
+                            {{ cluster.trend_label }} ({{ cluster.trend_delta_pct }}%)
+                        </span>
+                    </div>
+                    <svg viewBox="0 0 116 34" preserveAspectRatio="none" class="ux-sparkline" aria-hidden="true">
+                        <polyline points="{{ cluster.sparkline_points }}" />
+                    </svg>
+                    <small>Peak {{ cluster.high_watermark_l_hr|floatformat:1 }} L/hr · {{ cluster.trend_source }} source</small>
+                </div>
+
+                <p class="ux-cluster-behavior">{{ cluster.behavior }}</p>
+
+                <p class="ux-cluster-ai">
+                    <span class="ux-ai-tag {{ cluster.risk_color }}">{{ cluster.risk_label }}</span>
+                    <span>{{ cluster.prediction }}</span>
+                </p>
+            </a>
+            {% endfor %}
+        </div>
+    </article>
     {% empty %}
-    <div class="app-card p-3 text-secondary">No units available.</div>
+    <article class="ux-floor-card">
+        <p class="mb-0 text-secondary">No units available for this hostel.</p>
+    </article>
     {% endfor %}
 </section>
 {% endblock %}
+
+{% block app_js %}<script src="{% vstatic 'js/orgs.js' %}"></script>{% endblock %}

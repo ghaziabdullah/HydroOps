@@ -2,18 +2,54 @@
 {% load static %}
 
 {% block title %}Settings | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/ops.css' %}">{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="h5 mb-0">Settings / Thresholds & Rules</h3>
-    <span class="badge text-bg-light">Theme: Light</span>
-</div>
-<div class="grid gap-3 md:grid-cols-2">
-    {% for item in forms %}
-        {% include 'ops/partials/threshold_rule_card.html' with rule=item.rule form=item.form %}
-    {% empty %}
-        <div class="app-card p-3">No rules configured.</div>
-    {% endfor %}
-</div>
+<form method="post" id="thresholdRulesForm" class="st-page-form">
+    {% csrf_token %}
+
+    <section class="app-card st-hero-card st-topbar">
+        <h2>Settings / Thresholds & Rules</h2>
+        <div class="st-hero-actions">
+            <span class="st-save-state" data-save-state>All changes saved</span>
+            <button class="btn btn-primary btn-sm" type="submit" data-save-all>Save all changes</button>
+        </div>
+    </section>
+
+    <div class="st-sections">
+        {% for section in sections %}
+        <section class="app-card st-section-card" id="section-{{ section.key }}">
+            <header class="st-section-head">
+                <div>
+                    <h3>{{ section.title }}</h3>
+                </div>
+                <div class="st-section-actions">
+                    <button
+                        class="btn btn-outline-secondary btn-sm"
+                        type="submit"
+                        name="reset_section"
+                        value="{{ section.key }}"
+                        data-reset-section="{{ section.key }}"
+                        onclick="return window.confirm('Reset {{ section.title }} rules to default values?')"
+                    >
+                        Reset defaults
+                    </button>
+                </div>
+            </header>
+
+            <div class="st-rule-grid">
+                {% for card in section.rules %}
+                    {% include 'ops/partials/threshold_rule_card.html' with rule=card.rule form=card.form meta=card.meta standalone=False %}
+                {% endfor %}
+            </div>
+        </section>
+        {% empty %}
+        <section class="app-card p-3">
+            <p class="mb-0 text-secondary">No threshold rules configured.</p>
+        </section>
+        {% endfor %}
+    </div>
+</form>
 {% endblock %}
+
+{% block app_js %}<script src="{% vstatic 'js/ops_settings.js' %}"></script>{% endblock %}

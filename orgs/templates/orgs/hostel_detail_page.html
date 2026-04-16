@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Hostel Detail | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/orgs.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/orgs.css' %}">{% endblock %}
 
 {% block content %}
 <script type="application/json" id="hostelDashboardData">{{ chart_data_json|safe }}</script>
@@ -241,4 +241,4 @@
 {% endif %}
 {% endblock %}
 
-{% block app_js %}<script src="{% static 'js/orgs.js' %}"></script>{% endblock %}
+{% block app_js %}<script src="{% vstatic 'js/orgs.js' %}"></script>{% endblock %}

@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Hostels | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/dashboard.css' %}">{% endblock %}
 
 {% block content %}
 <section class="hs-summary-grid mb-3">
@@ -204,4 +204,4 @@
 {% endfor %}
 {% endblock %}
 
-{% block app_js %}<script src="{% static 'js/dashboard.js' %}"></script>{% endblock %}
+{% block app_js %}<script src="{% vstatic 'js/dashboard.js' %}"></script>{% endblock %}

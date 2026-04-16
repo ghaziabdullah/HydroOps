@@ -786,10 +786,6 @@ html[data-theme="dark"] .ov-status-card.has-low-tanks {
         flex-wrap: wrap;
     }
 
-    .app-sidebar {
-        display: none;
-    }
-
     .app-main {
         width: 100%;
     }

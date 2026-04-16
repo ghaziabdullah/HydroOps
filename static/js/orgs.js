@@ -176,6 +176,36 @@ function renderHostelCharts() {
 
 renderHostelCharts();
 
+(function initUnitsExplorerToggle() {
+    const root = document.getElementById("unitsExplorerRoot");
+    const toggle = document.getElementById("unitsViewToggle");
+    if (!root || !toggle) {
+        return;
+    }
+
+    const buttons = Array.from(toggle.querySelectorAll(".ux-view-btn"));
+    const savedView = localStorage.getItem("hydroops_units_view") || "grid";
+    applyView(savedView);
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const view = button.getAttribute("data-view") || "grid";
+            applyView(view);
+            localStorage.setItem("hydroops_units_view", view);
+        });
+    });
+
+    function applyView(view) {
+        const normalizedView = view === "diagram" ? "diagram" : "grid";
+        root.classList.add("is-switching");
+        root.setAttribute("data-view", normalizedView);
+        buttons.forEach((button) => {
+            button.classList.toggle("active", button.getAttribute("data-view") === normalizedView);
+        });
+        window.setTimeout(() => root.classList.remove("is-switching"), 140);
+    }
+})();
+
 const themeToggle = document.getElementById("themeToggle");
 if (themeToggle) {
     themeToggle.addEventListener("click", () => {

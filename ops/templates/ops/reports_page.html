@@ -2,44 +2,85 @@
 {% load static %}
 
 {% block title %}Reports & Insights | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/ops.css' %}">{% endblock %}
 
 {% block content %}
+<section class="rp-card rp-controls-card mb-3">
+    <form class="rp-controls" method="get" action="">
+        <label class="rp-control-field">
+            <span>Scope</span>
+            <select class="form-select form-select-sm" name="scope" id="reportScopeSelect">
+                {% for value, label in scope_options %}
+                <option value="{{ value }}" {% if selected_filters.scope == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="rp-control-field">
+            <span>Hostel</span>
+            <select class="form-select form-select-sm" name="hostel_id" id="reportHostelSelect">
+                <option value="">All hostels</option>
+                {% for hostel in hostels %}
+                <option value="{{ hostel.id }}" {% if selected_filters.hostel_id == hostel.id|stringformat:'s' %}selected{% endif %}>{{ hostel.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="rp-control-field">
+            <span>Unit</span>
+            <select class="form-select form-select-sm" name="unit_id" id="reportUnitSelect">
+                <option value="">All units</option>
+                {% for unit in units %}
+                <option value="{{ unit.id }}" {% if selected_filters.unit_id == unit.id|stringformat:'s' %}selected{% endif %}>{{ unit.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="rp-control-field">
+            <span>Report period</span>
+            <select class="form-select form-select-sm" name="period">
+                {% for value, label in period_options %}
+                <option value="{{ value }}" {% if selected_filters.period == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="rp-toggle-field" for="comparePreviousToggle">
+            <input type="checkbox" id="comparePreviousToggle" name="compare" value="1" {% if selected_filters.compare %}checked{% endif %}>
+            <span>Compare to previous period</span>
+        </label>
+
+        <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+    </form>
+</section>
+
 <section class="rp-summary-grid">
+    {% for card in summary_cards %}
     <article class="rp-card rp-summary-card">
-        <h3>Weekly consumption report</h3>
-        <p>Today Used</p>
-        <p><strong>{{ weekly_consumption }} L</strong></p>
-        <p>Hostel / Unit</p>
+        <div class="rp-kpi-head">
+            <span class="rp-kpi-icon {{ card.icon }}" aria-hidden="true"></span>
+            <h3>{{ card.title }}</h3>
+        </div>
+        <p class="rp-kpi-value">{{ card.value }}</p>
+        <p class="rp-kpi-meta">{{ card.meta }}</p>
+        <p class="rp-kpi-delta">{{ card.delta }}</p>
+        <div class="rp-kpi-actions">
+            <a class="btn btn-outline-info btn-sm" href="{{ card.details_link }}">View details</a>
+            <a class="btn btn-outline-secondary btn-sm js-report-export" href="{{ export_links.csv_summary }}">Export CSV</a>
+        </div>
     </article>
-
-    <article class="rp-card rp-summary-card">
-        <h3>Night wastage report (00:00-05:00)</h3>
-        <p>Total Unit</p>
-        <p><strong>{{ night_wastage }} L</strong></p>
-        <p>Unit washroom A</p>
-    </article>
-
-    <article class="rp-card rp-summary-card">
-        <h3>Tank refill summary</h3>
-        <p>Tank refill</p>
-        <p><strong>{{ tank_refill_events }}</strong></p>
-        <p>Tank refill summary</p>
-    </article>
-
-    <article class="rp-card rp-summary-card">
-        <h3>Quality compliance report</h3>
-        <p>Quality Status</p>
-        <p><strong>Quality compliance {{ quality_compliance }}%</strong></p>
-        <p>Status scenario</p>
-    </article>
+    {% endfor %}
 </section>
 
 <section class="rp-card rp-insights-card">
-    <h3>Insights</h3>
+    <div class="rp-insights-head">
+        <h3>Insights</h3>
+    </div>
+
     <div class="rp-insights-grid">
-        <article>
+        <article id="insights-night">
             <h4>Units with highest night flow</h4>
+            <p class="rp-helper-text">Watch these first for probable leakage during off-peak hours.</p>
             <table class="table table-sm rp-table mb-0">
                 <thead>
                     <tr>
@@ -50,9 +91,9 @@
                 </thead>
                 <tbody>
                     {% for row in high_night_units %}
-                    <tr>
+                    <tr class="rp-row-link" {% if row.url %}data-href="{{ row.url }}"{% endif %}>
                         <td>{{ row.rank }}</td>
-                        <td>{{ row.asset }}</td>
+                        <td>{% if row.url %}<a href="{{ row.url }}">{{ row.asset }}</a>{% else %}{{ row.asset }}{% endif %}</td>
                         <td>{{ row.usage }}</td>
                     </tr>
                     {% empty %}
@@ -62,8 +103,9 @@
             </table>
         </article>
 
-        <article>
+        <article id="insights-leaks">
             <h4>Hostels with repeated leak alerts</h4>
+            <p class="rp-helper-text">Repeated triggers here likely need root-cause checks, not one-off fixes.</p>
             <table class="table table-sm rp-table mb-0">
                 <thead>
                     <tr>
@@ -74,20 +116,25 @@
                 </thead>
                 <tbody>
                     {% for row in repeated_leak_hostels %}
-                    <tr>
+                    <tr class="rp-row-link" {% if row.url %}data-href="{{ row.url }}"{% endif %}>
                         <td>{{ row.rank }}</td>
-                        <td>{{ row.asset }}</td>
+                        <td>{% if row.url %}<a href="{{ row.url }}">{{ row.asset }}</a>{% else %}{{ row.asset }}{% endif %}</td>
                         <td class="text-danger-emphasis">{{ row.events }}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="3" class="text-secondary">No repeated alerts.</td></tr>
+                    <tr>
+                        <td colspan="3">
+                            <span class="rp-all-clear">All clear: no repeated leak alerts in selected period.</span>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </article>
 
-        <article>
+        <article id="insights-discrepancy">
             <h4>Inlet vs outlet discrepancy days</h4>
+            <p class="rp-helper-text">Higher discrepancy indicates balancing drift or hidden losses.</p>
             <table class="table table-sm rp-table mb-0">
                 <thead>
                     <tr>
@@ -98,9 +145,9 @@
                 </thead>
                 <tbody>
                     {% for row in discrepancy_days %}
-                    <tr>
+                    <tr class="rp-row-link" {% if row.url %}data-href="{{ row.url }}"{% endif %}>
                         <td>{{ row.rank }}</td>
-                        <td>{{ row.asset }}</td>
+                        <td>{% if row.url %}<a href="{{ row.url }}">{{ row.asset }}</a>{% else %}{{ row.asset }}{% endif %}</td>
                         <td>{{ row.discrepancy }}</td>
                     </tr>
                     {% empty %}
@@ -111,9 +158,30 @@
         </article>
     </div>
 
+    <section class="rp-actions-board">
+        <h4>Recommended actions (rules-based)</h4>
+        <ul>
+            {% for action in recommended_actions %}
+            <li>{{ action }}</li>
+            {% empty %}
+            <li>All clear. No immediate operational actions required.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
     <div class="rp-actions">
-        <button class="btn btn-outline-info btn-sm" type="button">Export CSV</button>
-        <button class="btn btn-outline-secondary btn-sm" type="button">Export PDF (placeholder)</button>
+        <div class="dropdown">
+            <button class="btn btn-outline-info btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="reportsExportBtn">
+                Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item js-report-export" href="{{ export_links.csv_summary }}">CSV summary</a></li>
+                <li><a class="dropdown-item js-report-export" href="{{ export_links.csv_raw }}">CSV raw</a></li>
+                <li><a class="dropdown-item js-report-export" href="{{ export_links.pdf }}">PDF placeholder</a></li>
+            </ul>
+        </div>
     </div>
 </section>
 {% endblock %}
+
+{% block app_js %}<script src="{% vstatic 'js/ops_reports.js' %}"></script>{% endblock %}

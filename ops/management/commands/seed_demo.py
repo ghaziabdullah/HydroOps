@@ -28,7 +28,7 @@ class Command(BaseCommand):
     ]
 
     INTEGRATION_HOSTEL_CODE = "hajveri"
-    INTEGRATION_UNIT_CODE = "unit-10"
+    INTEGRATION_UNIT_CODE = "f04-cluster-b"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -71,12 +71,12 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Seed completed for {len(hostels)} hostels x 10 units. Alerts created/updated: {len(created_alerts)}"
+                f"Seed completed for {len(hostels)} hostels x 12 units. Alerts created/updated: {len(created_alerts)}"
             )
         )
         self.stdout.write(
             self.style.WARNING(
-                "Integration-ready lane reserved at Hajveri / Unit 10: last 48h of synthetic meter readings are omitted."
+                "Integration-ready lane reserved at Hajveri / Floor 4 Cluster B: last 48h of synthetic meter readings are omitted."
             )
         )
 
@@ -122,10 +122,10 @@ class Command(BaseCommand):
         )
 
         floor_units = []
-        for floor_no in range(1, 6):
+        for floor_no in range(1, 5):
             unit, _ = Unit.objects.get_or_create(
                 hostel=hostel,
-                code=f"unit-{floor_no:02d}",
+                code=f"floor-{floor_no:02d}",
                 defaults={
                     "name": f"Floor {floor_no}",
                     "unit_type": Unit.UnitType.FLOOR,
@@ -135,17 +135,18 @@ class Command(BaseCommand):
             floor_units.append(unit)
 
         cluster_units = []
-        for index, suffix in enumerate(["A", "B", "C", "D", "E"], start=6):
-            unit, _ = Unit.objects.get_or_create(
-                hostel=hostel,
-                code=f"unit-{index:02d}",
-                defaults={
-                    "name": f"Cluster {suffix}",
-                    "unit_type": Unit.UnitType.CLUSTER,
-                    "is_active": True,
-                },
-            )
-            cluster_units.append(unit)
+        for floor_no in range(1, 5):
+            for suffix in ["A", "B"]:
+                unit, _ = Unit.objects.get_or_create(
+                    hostel=hostel,
+                    code=f"f{floor_no:02d}-cluster-{suffix.lower()}",
+                    defaults={
+                        "name": f"Floor {floor_no} Washroom Cluster {suffix}",
+                        "unit_type": Unit.UnitType.CLUSTER,
+                        "is_active": True,
+                    },
+                )
+                cluster_units.append(unit)
 
         self._create_asset_stack(hostel, floor_units + cluster_units)
         return hostel
@@ -358,15 +359,18 @@ class Command(BaseCommand):
             # Main inlet / aggregation sensors carry larger values.
             value = daily_wave * 5.2 * weekday_factor * seasonal * drift_factor
         else:
-            unit_num = int(unit.code.split("-")[-1])
+            try:
+                unit_num = int(unit.code.split("-")[-1])
+            except ValueError:
+                unit_num = (sum(ord(char) for char in unit.code) % 9) + 1
             unit_scale = 0.55 + ((unit_num % 5) * 0.08) + (hostel_index * 0.015)
             value = daily_wave * unit_scale * weekday_factor * seasonal * drift_factor
 
             # Leak signature: persistent night trickle in selected units.
             if (sensor.device.asset.hostel.code, unit.code) in {
-                ("hajveri", "unit-03"),
-                ("razi", "unit-06"),
-                ("ghazali", "unit-02"),
+                ("hajveri", "f02-cluster-a"),
+                ("razi", "f03-cluster-b"),
+                ("ghazali", "f01-cluster-a"),
             } and (0 <= timestamp.hour <= 4):
                 value = max(value, 4.2 + random.uniform(-0.3, 0.4))
 

@@ -1,36 +1,60 @@
 {% load widget_tweaks %}
-<div id="rule-card-{{ rule.id }}" class="app-card p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h4 class="h6 mb-0">{{ rule.get_rule_type_display }}</h4>
-        {% if rule.is_active %}<span class="badge text-bg-success">Enabled</span>{% else %}<span class="badge text-bg-secondary">Disabled</span>{% endif %}
+<div id="rule-card-{{ rule.id }}" class="app-card st-rule-card" data-rule-id="{{ rule.id }}">
+    <div class="st-rule-head">
+        <div>
+            <h4>{{ rule.get_rule_type_display }}</h4>
+        </div>
+        <div class="st-rule-unit">Unit: {{ meta.unit_label }}</div>
     </div>
+
+    {% if standalone %}
     <form method="post"
+          class="st-rule-form"
           hx-post="{% url 'ops:update-threshold-rule' rule.id %}"
           hx-target="#rule-card-{{ rule.id }}"
           hx-swap="outerHTML">
         {% csrf_token %}
-        <div class="row g-2 mb-2">
-            <div class="col-6">
-                <label class="form-label small">Warning</label>
-                {% render_field form.warning_value class="form-control form-control-sm" %}
-            </div>
-            <div class="col-6">
-                <label class="form-label small">Critical</label>
-                {% render_field form.critical_value class="form-control form-control-sm" %}
+    {% endif %}
+
+    <div class="st-rule-grid-fields">
+        <div class="st-field-block">
+            <label class="form-label">Warn threshold</label>
+            {% if form.warning_value.errors %}
+                {% render_field form.warning_value class+="form-control form-control-sm is-invalid st-input" %}
+            {% else %}
+                {% render_field form.warning_value class+="form-control form-control-sm st-input" %}
+            {% endif %}
+            {% for error in form.warning_value.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="st-field-block">
+            <label class="form-label">Critical threshold</label>
+            {% if form.critical_value.errors %}
+                {% render_field form.critical_value class+="form-control form-control-sm is-invalid st-input" %}
+            {% else %}
+                {% render_field form.critical_value class+="form-control form-control-sm st-input" %}
+            {% endif %}
+            {% for error in form.critical_value.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="st-field-block st-field-wide">
+            <label class="form-label">Enabled</label>
+            <div class="form-check form-switch st-switch-wrap">
+                {% render_field form.is_active class="form-check-input" %}
+                <label class="form-check-label">Rule active</label>
             </div>
         </div>
-        <div class="row g-2 mb-2">
-            <div class="col-8">
-                <label class="form-label small">Unit Symbol</label>
-                {% render_field form.unit_symbol class="form-control form-control-sm" %}
-            </div>
-            <div class="col-4 d-flex align-items-end">
-                <div class="form-check form-switch">
-                    {% render_field form.is_active class="form-check-input" %}
-                    <label class="form-check-label small">Enabled</label>
-                </div>
-            </div>
-        </div>
+    </div>
+
+    {% if standalone %}
+    <div class="st-rule-footer">
         <button type="submit" class="btn btn-primary btn-sm">Save changes</button>
-    </form>
+    </div>
+    {% endif %}
+
+    {% if standalone %}</form>{% endif %}
 </div>

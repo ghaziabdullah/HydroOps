@@ -2,58 +2,79 @@
 {% load static %}
 
 {% block title %}AI & Forecasting | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/ops.css' %}">{% endblock %}
 
 {% block content %}
 <script type="application/json" id="forecastChartData">{{ forecast_chart_json|safe }}</script>
 
-<section class="af-select-grid">
-    <article class="af-card af-select-card">
-        <p class="af-label">Campus / Hostel / Unit</p>
-        <div class="af-segmented" aria-label="Scope selector">
-            <button type="button" class="{% if scope_type == 'CAMPUS' %}active{% endif %}">Campus</button>
-            <span>/</span>
-            <button type="button" class="{% if scope_type == 'HOSTEL' %}active{% endif %}">Hostel</button>
-            <span>/</span>
-            <button type="button" class="{% if scope_type == 'UNIT' %}active{% endif %}">Unit</button>
+<form method="get" class="af-card af-controls-card" id="forecastControlsForm">
+    <div class="af-controls-head">
+        <div>
+            <p class="af-label">Forecast controls</p>
+            <h2 class="af-page-title">AI & Forecasting Center</h2>
+            <p class="af-text-secondary">Scope, hostel, unit, and horizon update the forecast chart and operational tables.</p>
         </div>
-    </article>
-
-    <article class="af-card af-select-card">
-        <p class="af-label">Select a Hostel</p>
-        <div class="af-value-row">{{ selected_hostel_name|default:'Washroom A' }}</div>
-    </article>
-
-    <article class="af-card af-select-card">
-        <p class="af-label">Select a Unit</p>
-        <div class="af-value-row">{{ selected_unit_name|default:'Floor & washroom cluster' }}</div>
-    </article>
-
-    <article class="af-card af-select-card">
-        <p class="af-label">Forecast horizon</p>
-        <div class="af-segmented compact" aria-label="Horizon selector">
-            <button type="button" class="{% if horizon_hours == 6 %}active{% endif %}">6h</button>
-            <span>/</span>
-            <button type="button" class="{% if horizon_hours == 24 %}active{% endif %}">24h</button>
-            <span>/</span>
-            <button type="button" class="{% if horizon_hours == 168 %}active{% endif %}">7d</button>
+        <div class="af-controls-meta">
+            <span class="af-status-chip">{{ selected_scope_label }}</span>
+            <span class="af-status-chip af-status-chip-soft">{{ model_status_label }}</span>
         </div>
-    </article>
-</section>
+    </div>
+
+    <div class="af-controls-grid">
+        <label class="af-control-field">
+            <span>Scope</span>
+            <select name="scope" class="form-select form-select-sm js-forecast-control" id="forecastScopeSelect">
+                {% for value, label in forecast_scope_options %}
+                <option value="{{ value }}" {% if scope_type == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="af-control-field">
+            <span>Hostel</span>
+            <select name="hostel_id" class="form-select form-select-sm js-forecast-control" id="forecastHostelSelect">
+                <option value="">All hostels</option>
+                {% for hostel in hostels %}
+                <option value="{{ hostel.id }}" {% if selected_hostel_id == hostel.id %}selected{% endif %}>{{ hostel.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="af-control-field">
+            <span>Unit</span>
+            <select name="unit_id" class="form-select form-select-sm js-forecast-control" id="forecastUnitSelect">
+                <option value="">All units</option>
+                {% for unit in units %}
+                <option value="{{ unit.id }}" {% if selected_unit_id == unit.id %}selected{% endif %}>{{ unit.hostel.name }} - {{ unit.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="af-control-field">
+            <span>Forecast horizon</span>
+            <select name="horizon" class="form-select form-select-sm js-forecast-control" id="forecastHorizonSelect">
+                {% for value, label in forecast_horizon_options %}
+                <option value="{{ value }}" {% if horizon_hours == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </div>
+
+    <div class="af-controls-footer">
+        <p class="af-text-muted mb-0">Use the selectors above; the page updates automatically.</p>
+        <button class="btn btn-outline-secondary btn-sm" type="submit">Apply</button>
+    </div>
+</form>
 
 <section class="af-main-grid">
     <article class="af-card af-chart-card">
         <div class="af-chart-head">
-            <h3>Forecast Water Usage for chosen asset</h3>
-            <div class="af-mini-range">
-                <button type="button" class="active">24h</button>
-                <button type="button">7d</button>
-                <button type="button">30d</button>
-            </div>
+            <h3>Forecast Water Usage</h3>
+            <span class="af-status-chip">Horizon: {{ horizon_hours }}h</span>
         </div>
         <div class="af-legend">
-            <span><i></i>Predicted</span>
-            <span class="muted">stranding</span>
+            <span><i class="af-legend-line"></i>Predicted</span>
+            <span class="af-text-muted">Baseline reference</span>
         </div>
         <div class="af-chart-wrap">
             <canvas id="forecastChart" height="130"></canvas>
@@ -61,21 +82,32 @@
     </article>
 
     <aside class="af-card af-model-card">
-        <h3>Glassmorphism model</h3>
-        <p><span>Model:</span> {% if run %}{{ run.method|title }}{% else %}Not trained{% endif %} (demo baseline)</p>
-        <p><span>Last trained:</span> {% if run %}{{ run.generated_at|date:'Y-m-d H:i' }}{% else %}-{% endif %}</p>
-        <p><span>Metric:</span> MAPE -</p>
+        <div class="af-model-head">
+            <h3>Forecast Model</h3>
+            <span class="af-status-chip af-status-chip-soft">{{ model_status_label }}</span>
+        </div>
+        <p><span>Model:</span> {% if run %}{{ run.method|title }}{% else %}Baseline{% endif %}</p>
+        <p><span>Last trained:</span> {% if model_generated_at %}{{ model_generated_at|date:'Y-m-d H:i' }}{% else %}N/A{% endif %}</p>
+        <p><span>Metric:</span> {{ model_metric_label }}</p>
+        <p><span>Scope:</span> {{ selected_scope_label }}</p>
     </aside>
 </section>
 
 <section class="af-bottom-grid">
     <article class="af-card af-table-card">
-        <h3>Top predicted spikes tomorrow</h3>
+        <div class="af-table-head">
+            <div>
+                <h3>Top predicted spikes</h3>
+                <p class="af-text-muted">Units most likely to trend upward in the selected scope.</p>
+            </div>
+        </div>
+        <div class="table-responsive af-table-scroll">
         <table class="table table-sm af-table mb-0">
             <thead>
                 <tr>
                     <th>Asset</th>
                     <th>Predicted usage</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -83,56 +115,75 @@
                 <tr>
                     <td>{{ row.asset }}</td>
                     <td>{{ row.predicted }}</td>
+                    <td>{% if row.url %}<a class="btn btn-outline-secondary btn-sm" href="{{ row.url }}">View</a>{% else %}<span class="text-muted">N/A</span>{% endif %}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="2" class="text-secondary">No spike data.</td></tr>
+                <tr><td colspan="3" class="text-secondary">No spike data.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </article>
 
     <article class="af-card af-table-card">
-        <h3>Anomalies (rules now, AI later)</h3>
+        <div class="af-table-head">
+            <div>
+                <h3>Detected anomalies</h3>
+                <p class="af-text-muted">Rule-based alerts within the selected scope and horizon.</p>
+            </div>
+        </div>
+        <div class="table-responsive af-table-scroll">
         <table class="table table-sm af-table mb-0">
             <thead>
                 <tr>
                     <th>Event</th>
-                    <th>Events</th>
+                    <th>Message</th>
+                    <th>Severity</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in anomalies %}
                 <tr>
-                    <td>{{ row.event }}</td>
+                    <td>{% if row.url %}<a href="{{ row.url }}">{{ row.event }}</a>{% else %}{{ row.event }}{% endif %}</td>
                     <td>{{ row.message }}</td>
+                    <td><span class="af-pill af-pill-{{ row.severity_tone }}">{{ row.severity_label }}</span></td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="2" class="text-secondary">No anomalies flagged.</td></tr>
+                <tr><td colspan="3"><span class="af-all-clear">All clear: no anomalies flagged.</span></td></tr>
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </article>
 
     <article class="af-card af-table-card">
-        <h3>Recommendations</h3>
-        <table class="table table-sm af-table mb-0">
-            <thead>
-                <tr>
-                    <th>Insights</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in recommendations %}
-                <tr>
-                    <td>{{ row }}</td>
-                </tr>
-                {% empty %}
-                <tr><td class="text-secondary">No recommendations available.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="af-table-head">
+            <div>
+                <h3>Recommended actions</h3>
+                <p class="af-text-muted">Rules-based next steps derived from the current forecast and anomaly set.</p>
+            </div>
+        </div>
+        <ul class="af-action-list">
+            {% for item in recommendation_items %}
+            <li>
+                <span class="af-action-icon" aria-hidden="true"></span>
+                <div>
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.text }}</p>
+                </div>
+            </li>
+            {% empty %}
+            <li>
+                <span class="af-action-icon" aria-hidden="true"></span>
+                <div>
+                    <strong>All clear</strong>
+                    <p>No immediate operational actions required.</p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
     </article>
 </section>
 {% endblock %}
 
-{% block app_js %}<script src="{% static 'js/ops.js' %}"></script>{% endblock %}
+{% block app_js %}<script src="{% vstatic 'js/ops.js' %}"></script>{% endblock %}

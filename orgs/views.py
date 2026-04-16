@@ -1,4 +1,7 @@
 import json
+import math
+import re
+from collections import defaultdict
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
@@ -61,9 +64,112 @@ def _hourly_series(hostel, sensor_kind: str, since, fallback_base: float) -> tup
 	return labels, _default_curve(fallback_base)
 
 
+def _extract_floor_number(unit) -> int | None:
+	if unit is None:
+		return None
+
+	code_match = re.search(r"floor-(\d{2})", unit.code)
+	if code_match:
+		return int(code_match.group(1))
+
+	cluster_match = re.search(r"f(\d{2})-cluster-[ab]", unit.code)
+	if cluster_match:
+		return int(cluster_match.group(1))
+
+	name_match = re.search(r"floor\s*(\d+)", unit.name.lower())
+	if name_match:
+		return int(name_match.group(1))
+
+	return None
+
+
+def _extract_cluster_suffix(unit) -> str:
+	cluster_match = re.search(r"cluster-([ab])", unit.code)
+	if cluster_match:
+		return cluster_match.group(1).upper()
+
+	name_match = re.search(r"cluster\s*([ab])", unit.name.lower())
+	if name_match:
+		return name_match.group(1).upper()
+
+	return "A"
+
+
+def _risk_label_for_cluster(*, critical_alerts: int, alerts: int, night_ratio: float, flow_rate_l_min: float) -> tuple[str, str]:
+	if critical_alerts > 0 or (alerts >= 2 and night_ratio >= 0.62) or flow_rate_l_min >= 18:
+		return "Critical", "critical"
+	if alerts > 0 or night_ratio >= 0.72 or flow_rate_l_min >= 13:
+		return "Warning", "warning"
+	return "Low Risk", "safe"
+
+
+def _prediction_text_for_cluster(*, risk_color: str, night_ratio: float, usage_24h_l: float) -> str:
+	if risk_color == "critical":
+		return "Anomalous night-flow behavior; possible leakage signature"
+	if risk_color == "warning":
+		if night_ratio >= 0.5:
+			return "Elevated off-peak usage detected; inspect fixtures"
+		return "Usage pattern drifting upward; monitor next 6 hours"
+	if usage_24h_l < 220:
+		return "Low usage expected"
+	return "Stable behavior expected"
+
+
+def _minutes_ago_label(now, dt) -> str:
+	if dt is None:
+		return "No recent telemetry"
+	minutes = max(0, int((now - dt).total_seconds() // 60))
+	if minutes < 1:
+		return "Updated just now"
+	if minutes == 1:
+		return "Updated 1 min ago"
+	if minutes < 60:
+		return f"Updated {minutes} min ago"
+	hours = minutes // 60
+	if hours == 1:
+		return "Updated 1 hr ago"
+	return f"Updated {hours} hrs ago"
+
+
+def _sparkline_points(values: list[float], width: int = 116, height: int = 34) -> str:
+	if not values:
+		return ""
+
+	v_min = min(values)
+	v_max = max(values)
+	range_v = (v_max - v_min) or 1.0
+	step_x = width / max(len(values) - 1, 1)
+
+	coords = []
+	for idx, value in enumerate(values):
+		x = round(idx * step_x, 2)
+		y = round(height - ((value - v_min) / range_v) * height, 2)
+		coords.append(f"{x},{y}")
+	return " ".join(coords)
+
+
+def _generate_synthetic_trend(base: float, count: int = 8) -> list[float]:
+	values = []
+	for idx in range(count):
+		wave = math.sin((idx / max(count - 1, 1)) * math.pi * 2) * (base * 0.12)
+		shape = (0.88 + (0.1 if idx in (2, 5) else 0.0)) * base
+		values.append(max(0.05, round(shape + wave, 3)))
+	return values
+
+
 def _build_hostel_dashboard_context(hostel):
 	now = timezone.now()
 	since_24h = now - timedelta(hours=24)
+	hostel_temp_c = _float(
+		Reading.objects.filter(
+			sensor__device__asset__hostel=active_hostel,
+			sensor__kind=Sensor.SensorKind.TEMPERATURE,
+		)
+		.order_by("-timestamp")
+		.values_list("value", flat=True)
+		.first(),
+		24.0,
+	)
 
 	flow_readings = Reading.objects.filter(
 		sensor__device__asset__hostel=hostel,
@@ -268,7 +374,189 @@ def units_explorer_page_view(request):
 		parsed_hostel_id = hostels.first().id
 
 	active_hostel = get_hostel_or_none(parsed_hostel_id) if parsed_hostel_id else None
-	units = list_units(hostel_id=parsed_hostel_id)
+	units = list(list_units(hostel_id=parsed_hostel_id))
+
+	floor_units = [unit for unit in units if unit.unit_type == unit.UnitType.FLOOR]
+	cluster_units = [unit for unit in units if unit.unit_type == unit.UnitType.CLUSTER]
+
+	clusters_by_floor: dict[int, list] = defaultdict(list)
+	for unit in cluster_units:
+		floor_no = _extract_floor_number(unit)
+		if floor_no is None:
+			continue
+		clusters_by_floor[floor_no].append(unit)
+
+	now = timezone.now()
+	since_24h = now - timedelta(hours=24)
+	hostel_temp_c = 24.0
+	if active_hostel is not None:
+		hostel_temp_c = _float(
+			Reading.objects.filter(
+				sensor__device__asset__hostel=active_hostel,
+				sensor__kind=Sensor.SensorKind.TEMPERATURE,
+			)
+			.order_by("-timestamp")
+			.values_list("value", flat=True)
+			.first(),
+			24.0,
+		)
+
+	floor_cards = []
+	for floor in sorted(floor_units, key=lambda item: _extract_floor_number(item) or 999):
+		floor_no = _extract_floor_number(floor)
+		if floor_no is None:
+			continue
+
+		clusters = sorted(
+			clusters_by_floor.get(floor_no, []),
+			key=lambda item: _extract_cluster_suffix(item),
+		)
+		cluster_cards = []
+		for cluster in clusters[:2]:
+			flow_readings_qs = Reading.objects.filter(
+				sensor__device__asset__unit=cluster,
+				sensor__kind=Sensor.SensorKind.FLOW,
+			)
+			latest_reading_ts = flow_readings_qs.order_by("-timestamp").values_list("timestamp", flat=True).first()
+			trend_points_raw = list(
+				flow_readings_qs.filter(timestamp__gte=since_24h)
+				.annotate(bucket=TruncHour("timestamp"))
+				.values("bucket")
+				.annotate(avg_value=Avg("value"))
+				.order_by("bucket")
+			)
+			trend_values = [round(_float(item["avg_value"]), 3) for item in trend_points_raw[-8:]]
+			trend_source = "Live"
+
+			flow_rate_l_min = _float(
+				flow_readings_qs.order_by("-timestamp").values_list("value", flat=True).first(),
+				4.2,
+			)
+			usage_24h_l = _float(
+				flow_readings_qs.filter(timestamp__gte=since_24h).aggregate(total=Sum("value"))["total"],
+				240.0,
+			)
+			night_flow_l_min = _float(
+				flow_readings_qs.filter(
+					timestamp__gte=since_24h,
+					timestamp__hour__lt=5,
+				).aggregate(avg=Avg("value"))["avg"],
+				flow_rate_l_min * 0.6,
+			)
+			day_flow_l_min = _float(
+				flow_readings_qs.filter(
+					timestamp__gte=since_24h,
+					timestamp__hour__gte=6,
+					timestamp__hour__lt=22,
+				).aggregate(avg=Avg("value"))["avg"],
+				max(flow_rate_l_min, 0.1),
+			)
+			night_ratio = night_flow_l_min / max(day_flow_l_min, 0.1)
+
+			if len(trend_values) < 2:
+				historical_values = [
+					round(_float(value), 3)
+					for value in reversed(list(flow_readings_qs.order_by("-timestamp").values_list("value", flat=True)[:8]))
+				]
+				if len(historical_values) >= 2:
+					trend_values = historical_values
+					trend_source = "Historical"
+				else:
+					trend_values = _generate_synthetic_trend(max(flow_rate_l_min, 1.0))
+					trend_source = "Generated"
+			has_trend_data = len(trend_values) >= 2
+
+			cluster_alerts_qs = Alert.objects.filter(unit=cluster, ended_at__isnull=True)
+			alerts_count = cluster_alerts_qs.count()
+			critical_count = cluster_alerts_qs.filter(severity=Alert.Severity.CRITICAL).count()
+
+			risk_label, risk_color = _risk_label_for_cluster(
+				critical_alerts=critical_count,
+				alerts=alerts_count,
+				night_ratio=night_ratio,
+				flow_rate_l_min=flow_rate_l_min,
+			)
+			if night_ratio >= 0.58:
+				behavior = "Persistent off-peak flow"
+			elif usage_24h_l < 220:
+				behavior = "Conservative use pattern"
+			else:
+				behavior = "Balanced daily cycle"
+
+			trend_delta_pct = 0.0
+			trend_label = "No Trend"
+			if has_trend_data:
+				trend_delta_pct = ((trend_values[-1] - trend_values[0]) / max(trend_values[0], 0.1)) * 100
+				if trend_delta_pct >= 12:
+					trend_label = "Rising"
+				elif trend_delta_pct <= -10:
+					trend_label = "Dropping"
+				else:
+					trend_label = "Stable"
+			cluster_cards.append(
+				{
+					"unit": cluster,
+					"suffix": _extract_cluster_suffix(cluster),
+					"flow_rate": round(flow_rate_l_min * 60, 1),
+					"usage_24h": round(usage_24h_l, 1),
+					"night_flow": round(night_flow_l_min * 60, 1),
+					"alerts": alerts_count,
+					"critical_alerts": critical_count,
+					"behavior": behavior,
+					"last_updated": _minutes_ago_label(now, latest_reading_ts),
+					"trend_label": trend_label,
+					"trend_delta_pct": round(trend_delta_pct, 1),
+					"trend_source": trend_source,
+					"sparkline_points": _sparkline_points(trend_values),
+					"high_watermark_l_hr": round(max(trend_values) * 60, 1) if trend_values else 0,
+					"temperature_c": round(hostel_temp_c + (0.2 if _extract_cluster_suffix(cluster) == "B" else -0.1), 1),
+					"risk_label": risk_label,
+					"risk_color": risk_color,
+					"prediction": _prediction_text_for_cluster(
+						risk_color=risk_color,
+						night_ratio=night_ratio,
+						usage_24h_l=usage_24h_l,
+					),
+				}
+			)
+
+		if not cluster_cards:
+			continue
+
+		avg_flow = sum(card["flow_rate"] for card in cluster_cards) / len(cluster_cards)
+		floor_alerts = sum(card["alerts"] for card in cluster_cards)
+		if any(card["risk_color"] == "critical" for card in cluster_cards):
+			floor_status, floor_status_color = "Critical", "critical"
+		elif any(card["risk_color"] == "warning" for card in cluster_cards):
+			floor_status, floor_status_color = "Warning", "warning"
+		else:
+			floor_status, floor_status_color = "Low Risk", "safe"
+
+		floor_cards.append(
+			{
+				"floor": floor,
+				"floor_number": floor_no,
+				"title": floor.name,
+				"status": floor_status,
+				"status_color": floor_status_color,
+				"average_flow_l_hr": round(avg_flow, 1),
+				"alerts": floor_alerts,
+				"clusters": cluster_cards,
+			}
+		)
+
+	active_alerts = 0
+	if active_hostel is not None:
+		active_alerts = Alert.objects.filter(hostel=active_hostel, ended_at__isnull=True).count()
+
+	hostel_units_summary = {
+		"total_floors": len(floor_cards),
+		"total_clusters": sum(len(card["clusters"]) for card in floor_cards),
+		"active_alerts": active_alerts,
+		"total_floors_desc": "Floors mapped in this hostel",
+		"total_clusters_desc": "Washroom clusters monitored",
+		"active_alerts_desc": "Open alerts needing action",
+	}
 	return render(
 		request,
 		"orgs/units_explorer_page.html",
@@ -277,6 +565,8 @@ def units_explorer_page_view(request):
 			"hostels": hostels,
 			"active_hostel": active_hostel,
 			"units": units,
+			"floor_cards": floor_cards,
+			"hostel_units_summary": hostel_units_summary,
 		},
 	)
 

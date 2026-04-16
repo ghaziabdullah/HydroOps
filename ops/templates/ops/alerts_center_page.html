@@ -2,45 +2,210 @@
 {% load static %}
 
 {% block title %}Alerts Center | HydroOps{% endblock %}
-{% block app_css %}<link rel="stylesheet" href="{% static 'css/ops.css' %}">{% endblock %}
+{% block app_css %}<link rel="stylesheet" href="{% vstatic 'css/ops.css' %}">{% endblock %}
 
 {% block content %}
-<div class="grid gap-3 xl:grid-cols-3">
-    <section class="app-card p-3 xl:col-span-2">
-        <div class="d-flex flex-wrap gap-2 mb-3">
-            <span class="badge text-bg-danger">Leak suspected</span>
-            <span class="badge text-bg-warning">Blockage suspected</span>
-            <span class="badge text-bg-info">Overflow risk</span>
-            <span class="badge text-bg-secondary">Quality warning</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-sm align-middle">
-                <thead><tr><th>Alert</th><th>Scope</th><th>Severity</th><th>Action</th></tr></thead>
-                <tbody>
-                {% for alert in alerts %}
-                    <tr>
-                        <td>{{ alert.alert_type }}</td>
-                        <td>{{ alert.unit.name|default:alert.hostel.name }}</td>
-                        <td><span class="badge {% if alert.severity == 'CRITICAL' %}text-bg-danger{% else %}text-bg-warning{% endif %}">{{ alert.severity }}</span></td>
-                        <td>
-                            <form method="post" action="{% url 'ops:alert-acknowledge-api' alert.id %}">
-                                {% csrf_token %}
-                                <button class="btn btn-outline-secondary btn-sm" type="submit">Acknowledge</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="4" class="text-secondary">No active alerts.</td></tr>
+<div class="alerts-page-grid">
+    <section class="app-card ac-card ac-main-panel">
+        <header class="ac-head">
+            <div>
+                <h2 class="ac-title">Alerts Center</h2>
+                <p class="ac-subtitle">Live risk triage for leak, blockage, overflow, quality, and sensor health.</p>
+            </div>
+        </header>
+
+        <form class="ac-filters" method="get" action="">
+            <div class="ac-chip-row" role="group" aria-label="Alert type filters">
+                {% for value, label in alert_type_filter_options %}
+                <label class="ac-filter-chip {% if value in selected_filters.alert_types %}active{% endif %}">
+                    <input type="checkbox" name="alert_type" value="{{ value }}" {% if value in selected_filters.alert_types %}checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
                 {% endfor %}
-                </tbody>
-            </table>
-        </div>
+            </div>
+
+            <div class="ac-filter-grid">
+                <label class="ac-filter-field">
+                    <span>Severity</span>
+                    <select name="severity" class="form-select form-select-sm">
+                        <option value="">All severities</option>
+                        {% for value, label in severity_options %}
+                        <option value="{{ value }}" {% if selected_filters.severity == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label class="ac-filter-field">
+                    <span>Status</span>
+                    <select name="status" class="form-select form-select-sm">
+                        {% for value, label in status_options %}
+                        <option value="{{ value }}" {% if selected_filters.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label class="ac-filter-field">
+                    <span>Hostel</span>
+                    <select name="hostel_id" class="form-select form-select-sm">
+                        <option value="">All hostels</option>
+                        {% for hostel in hostels %}
+                        <option value="{{ hostel.id }}" {% if selected_filters.hostel_id == hostel.id|stringformat:'s' %}selected{% endif %}>{{ hostel.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label class="ac-filter-field">
+                    <span>Unit contains</span>
+                    <input class="form-control form-control-sm" type="text" name="unit_q" value="{{ selected_filters.unit_q }}" placeholder="Floor 2 Cluster A">
+                </label>
+
+                <label class="ac-filter-field">
+                    <span>Range</span>
+                    <select name="range" class="form-select form-select-sm">
+                        {% for value, label in time_range_options %}
+                        <option value="{{ value }}" {% if selected_filters.range == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label class="ac-filter-field ac-filter-search">
+                    <span>Search message or scope</span>
+                    <input class="form-control form-control-sm" type="search" name="q" value="{{ selected_filters.q }}" placeholder="Leak, Hajveri, Floor 3...">
+                </label>
+            </div>
+
+            <div class="ac-filter-actions">
+                <button class="btn btn-primary btn-sm" type="submit">Apply filters</button>
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'ops:alerts-center-page' %}">Reset</a>
+            </div>
+        </form>
+
+        {% if alerts %}
+        <form method="post" action="" id="bulkAcknowledgeForm">
+            {% csrf_token %}
+            <input type="hidden" name="current_query" value="{{ current_query }}">
+            <div class="ac-table-actions">
+                <label class="ac-checkbox-inline">
+                    <input type="checkbox" id="acSelectAll">
+                    <span>Select all visible</span>
+                </label>
+                <button class="btn btn-outline-warning btn-sm" type="submit" id="ackSelectedBtn" disabled>Acknowledge selected</button>
+            </div>
+
+            <div class="table-responsive ac-table-wrap">
+                <table class="table table-sm align-middle ac-alert-table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ac-col-check"></th>
+                            <th>Type</th>
+                            <th>Message</th>
+                            <th>Scope</th>
+                            <th>Started</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alerts %}
+                        <tr class="ac-alert-row {% if forloop.first %}is-selected{% endif %}"
+                            data-alert-id="{{ alert.id }}"
+                            data-alert-type="{{ alert.type_label }}"
+                            data-alert-scope="{{ alert.scope }}"
+                            data-alert-message="{{ alert.message|escape }}"
+                            data-alert-started="{{ alert.started_at|date:'Y-m-d H:i' }}"
+                            data-alert-severity="{{ alert.severity_label }}"
+                            data-alert-status="{{ alert.status_label }}"
+                            data-alert-ack="{{ alert.acknowledged|yesno:'true,false' }}"
+                            data-alert-ack-url="{% url 'ops:alert-acknowledge-api' alert.id %}">
+                            <td class="ac-col-check">
+                                <input type="checkbox" name="alert_ids" value="{{ alert.id }}" class="ac-row-check">
+                            </td>
+                            <td><span class="ac-type-pill">{{ alert.type_label }}</span></td>
+                            <td title="{{ alert.message }}">{{ alert.short_message }}</td>
+                            <td>{{ alert.scope }}</td>
+                            <td>
+                                <div>{{ alert.started_at|date:'M d, H:i' }}</div>
+                                <small class="text-secondary">{{ alert.started_age }}</small>
+                            </td>
+                            <td>
+                                <span class="ac-severity-pill {% if alert.severity == 'CRITICAL' %}sev-critical{% elif alert.severity == 'WARN' %}sev-warn{% else %}sev-info{% endif %}">
+                                    <i></i>{{ alert.severity_label }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="ac-status-pill {% if alert.status == 'UNACKNOWLEDGED' %}status-open{% elif alert.status == 'ACKNOWLEDGED' %}status-ack{% else %}status-resolved{% endif %}">
+                                    {{ alert.status_label }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if alert.acknowledged %}
+                                <span class="text-secondary small">Done</span>
+                                {% else %}
+                                <button class="btn btn-outline-secondary btn-sm js-row-ack" type="button">Acknowledge</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+        {% else %}
+        <article class="ac-empty-state">
+            <h3>All clear</h3>
+            <p>No alerts match the current filters. Water operations look stable for the selected period.</p>
+        </article>
+        {% endif %}
     </section>
 
-    <aside class="app-card p-3">
-        <h3 class="h6">Alert Detail</h3>
-        <p class="small text-secondary">Select an alert row to inspect details and actions.</p>
-        <button class="btn btn-primary btn-sm" type="button">Create Work Order</button>
+    <aside class="app-card ac-card ac-detail-panel" id="alertDetailPanel"
+        data-empty="No alert selected. Choose an alert row to inspect details and actions.">
+        <div class="ac-detail-head">
+            <h3>Alert Detail</h3>
+            <span class="ac-detail-status" id="detailStatus">-</span>
+        </div>
+
+        {% if selected_alert %}
+        <div class="ac-detail-body">
+            <dl>
+                <dt>Type</dt>
+                <dd id="detailType">{{ selected_alert.type_label }}</dd>
+                <dt>Scope</dt>
+                <dd id="detailScope">{{ selected_alert.scope }}</dd>
+                <dt>Severity</dt>
+                <dd id="detailSeverity">{{ selected_alert.severity_label }}</dd>
+                <dt>Started</dt>
+                <dd id="detailStarted">{{ selected_alert.started_at|date:'Y-m-d H:i' }}</dd>
+                <dt>Message</dt>
+                <dd id="detailMessage">{{ selected_alert.message }}</dd>
+            </dl>
+
+            <div class="ac-mini-chart-placeholder">
+                <h4>Signal trend (placeholder)</h4>
+                <div aria-hidden="true"></div>
+            </div>
+
+            <section class="ac-cause-list">
+                <h4>Suggested cause (rule engine v1)</h4>
+                <ul>
+                    <li>Flow profile deviates from expected range at this scope.</li>
+                    <li>Consecutive threshold breaches indicate a persistent condition.</li>
+                    <li>Validate sensor drift and valve state during inspection.</li>
+                </ul>
+            </section>
+        </div>
+
+        <div class="ac-detail-actions">
+            <button class="btn btn-warning btn-sm" type="button" id="detailAcknowledgeBtn" data-ack-url="{% url 'ops:alert-acknowledge-api' selected_alert.id %}">Acknowledge</button>
+            <button class="btn btn-outline-primary btn-sm" type="button">Create Work Order</button>
+            <a class="btn btn-outline-secondary btn-sm" href="#">View unit data</a>
+        </div>
+        {% else %}
+        <p class="text-secondary mb-0">No alert selected. Choose an alert row to inspect details and actions.</p>
+        {% endif %}
     </aside>
 </div>
 {% endblock %}
+
+{% block app_js %}<script src="{% vstatic 'js/ops_alerts_center.js' %}"></script>{% endblock %}
